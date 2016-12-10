@@ -1,8 +1,8 @@
 ; Symbols exported by OpenFace
 
 EXPORTS
-    EywUserDll_GetSDKVersion			PRIVATE
-    EywUserDll_IsDebugBuild				PRIVATE
+	EywUserDll_GetSDKVersion			PRIVATE
+	EywUserDll_IsDebugBuild				PRIVATE
 	EywUserDll_GetDllIdentifier			PRIVATE
 	EywUserDll_GetDllLanguageIDCount	PRIVATE
 	EywUserDll_GetDllLanguageID			PRIVATE

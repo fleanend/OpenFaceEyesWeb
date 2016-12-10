@@ -9,11 +9,11 @@ static CSTR g_szDllIdentifier = "OPENFACE_{8E62B024-CF9A-4139-9318-E3E0FDF3E92E}
 
 
 BOOL APIENTRY DllMain( HMODULE hModule, 
-                       DWORD  ul_reason_for_call, 
-                       LPVOID lpReserved
+					   DWORD  ul_reason_for_call, 
+					   LPVOID lpReserved
 					 )
 {
-    switch( ul_reason_for_call )
+	switch( ul_reason_for_call )
 	{
 	case DLL_PROCESS_ATTACH:
 		if( !SDKInit( hModule, g_szDllIdentifier ) )
@@ -25,6 +25,6 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		break;
 	}
 
-    return TRUE;
+	return TRUE;
 }
 

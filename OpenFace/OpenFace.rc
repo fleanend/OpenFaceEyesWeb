@@ -7,25 +7,17 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// version numbering
-//
-#include "EywVersion.h"
+#include "winres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// Inglese (Stati Uniti) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -52,52 +44,74 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION __FILE_VERSION__
-PRODUCTVERSION __FILE_VERSION__
-FILEFLAGSMASK 0x17L
+ FILEVERSION 5,6,2,0
+ PRODUCTVERSION 5,6,2,0
+ FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
 #else
  FILEFLAGS 0x0L
 #endif
-FILEOS 0x4L
-FILETYPE 0x2L
-FILESUBTYPE 0x0L
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
 BEGIN
-	BLOCK "StringFileInfo"
-	BEGIN
-		BLOCK "041004b0"
-		BEGIN
-		VALUE "CompanyName", __COMPANY_NAME__ __COMPANY_DETAILS__
-			VALUE "FileDescription", "OpenFace Dynamic Link Library"
-			VALUE "FileVersion", __VERSION_NUMBER__
-			VALUE "InternalName", "OpenFace"
-			VALUE "LegalCopyright", __COPYRIGHT__
-			VALUE "OriginalFilename", "OpenFace.dll"
-			VALUE "ProductName", "OpenFace Dynamic Link Library"
-			VALUE "ProductVersion", __VERSION_NUMBER__
-		END
-	END
-	BLOCK "VarFileInfo"
-	BEGIN
-		VALUE "Translation", 0x410, 1200
-	END
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041004b0"
+        BEGIN
+            VALUE "CompanyName", "InfoMus Lab, DIBRIS, University of Genoa - Italy\r\nhttp://www.infomus.org\r\nhttp://eyesweb.infomus.org\r\nmailto:info@infomus.org"
+            VALUE "FileDescription", "OpenFace Dynamic Link Library"
+            VALUE "FileVersion", "5.6.2.0"
+            VALUE "InternalName", "OpenFace"
+            VALUE "LegalCopyright", "Copyright (C) 1999-2016, InfoMus Lab, DIBRIS, University of Genoa - Italy"
+            VALUE "OriginalFilename", "OpenFace.dll"
+            VALUE "ProductName", "OpenFace Dynamic Link Library"
+            VALUE "ProductVersion", "5.6.2.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x410, 1200
+    END
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Bitmap
 //
 
-IDB_OPENFACE_CATALOG BITMAP                  "res\\OpenFace.bmp"
-#endif    // English (U.S.) resources
+IDB_OPENFACE_CATALOG    BITMAP                  "res\\OpenFace.bmp"
+
+#endif    // Inglese (Stati Uniti) resources
 /////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Italiano (Italia) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ITA)
+LANGUAGE LANG_ITALIAN, SUBLANG_ITALIAN
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_GAZEESTIMATOR_BITMAP    BITMAP                  "res\\GazeEstimator.bmp"
+
+#endif    // Italiano (Italia) resources
+/////////////////////////////////////////////////////////////////////////////
+
 
 
 #ifndef APSTUDIO_INVOKED
