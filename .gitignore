@@ -1,0 +1,6 @@
+OpenFace/Win32/
+Win32/Release/OpenFace.dll
+Win32/Release/OpenFace.exp
+Win32/Release/OpenFace.lib
+Win32/Release/OpenFace.pdb
+ipch/openface-83411c98/openface-32cfde9c.ipch
