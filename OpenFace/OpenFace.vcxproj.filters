@@ -13,6 +13,9 @@
       <UniqueIdentifier>{ae579078-733d-477a-9c12-561a75d79e81}</UniqueIdentifier>
       <Extensions>rc;rc2;ico;rgs;bmp</Extensions>
     </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{4a16c57c-0d88-46c0-8e46-ec4bd6d132d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />
@@ -30,11 +33,62 @@
     <ClInclude Include="GazeEstimator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\CCNF_patch_expert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Face_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FaceAnalyser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GazeEstimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LandmarkCoreIncludes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LandmarkDetectionValidator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LandmarkDetectorFunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LandmarkDetectorParameters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LandmarkDetectorUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Patch_experts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PAW.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PDM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVM_dynamic_lin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVM_static_lin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVR_dynamic_lin_regressors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVR_patch_expert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVR_static_lin_regressors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LandmarkDetectorModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Signature.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="OpenFace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -44,11 +98,60 @@
     <ClCompile Include="GazeEstimator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="OpenFace.def">
+    <ClCompile Include="Signature.cpp">
       <Filter>Source Files</Filter>
-    </None>
+    </ClCompile>
+    <ClCompile Include="src\CCNF_patch_expert.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Face_utils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FaceAnalyser.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GazeEstimation.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LandmarkDetectionValidator.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LandmarkDetectorFunc.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LandmarkDetectorModel.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LandmarkDetectorParameters.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LandmarkDetectorUtils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Patch_experts.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PAW.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PDM.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SVM_dynamic_lin.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SVM_static_lin.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SVR_dynamic_lin_regressors.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SVR_patch_expert.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SVR_static_lin_regressors.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OpenFace.rc">
@@ -62,5 +165,10 @@
     <Image Include="res\GazeEstimator.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="OpenFace.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

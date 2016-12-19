@@ -67,10 +67,10 @@
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/opencv.h>
 
-#include "include/PDM.h"
-#include "include/Patch_experts.h"
-#include "include/LandmarkDetectionValidator.h"
-#include "include/LandmarkDetectorParameters.h"
+#include "PDM.h"
+#include "Patch_experts.h"
+#include "LandmarkDetectionValidator.h"
+#include "LandmarkDetectorParameters.h"
 
 using namespace std;
 
