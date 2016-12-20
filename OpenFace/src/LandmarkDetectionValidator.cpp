@@ -56,7 +56,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "../stdafx.h"
 
 #include "LandmarkDetectionValidator.h"
 
@@ -167,8 +167,10 @@ void DetectionValidator::Read(string location)
 
 	ifstream detection_validator_stream (location, ios::in|ios::binary);
 	if (detection_validator_stream.is_open())	
-	{				
+	{	
 		detection_validator_stream.seekg (0, ios::beg);
+
+		cout << "First checkpoint" << endl;
 
 		// Read validator type
 		detection_validator_stream.read ((char*)&validator_type, 4);
@@ -192,6 +194,8 @@ void DetectionValidator::Read(string location)
 
 		// Initialise the piece-wise affine warps, biases and weights
 		paws.resize(n);
+
+		cout << "Second checkpoint" << endl;
 
 		if( validator_type == 0)
 		{
@@ -221,6 +225,8 @@ void DetectionValidator::Read(string location)
 		// Initialise the normalisation terms
 		mean_images.resize(n);
 		standard_deviations.resize(n);
+
+		cout << "Third checkpoint" << endl;
 
 		// Read in the validators for each of the views
 		for(int i = 0; i < n; i++)
@@ -347,6 +353,8 @@ void DetectionValidator::Read(string location)
 				}
 			}
 			
+			cout << "Starting Recursion" << endl;
+
 			// Read in the piece-wise affine warps
 			paws[i].Read(detection_validator_stream);
 		}
