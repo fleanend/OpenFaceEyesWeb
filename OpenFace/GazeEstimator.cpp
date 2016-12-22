@@ -144,6 +144,28 @@ bool CGazeEstimator::Init() throw()
 		m_outGazeEstimateLeftPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATELEFT );
 		m_outGazeEstimateRightPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATERIGHT );
 
+		clnf_model = LandmarkDetector::CLNF(det_parameters.model_location);
+		det_parameters.track_gaze = true;
+
+		int rows = m_inFrameImagePtr->GetHeight();
+		int cols = m_inFrameImagePtr->GetWidth();
+
+		PrepareCvImage(m_inFrameImagePtr, captured_image);
+
+		cx = rows / 2.0f;
+		cy = cols / 2.0f;
+
+		fx = 500 * ( rows / 640.0);
+		fy = 500 * ( cols / 480.0);
+
+		fx = (fx + fy) / 2.0;
+		fy = fx;
+
+		leftEyeVector = cv::Point3f(0, 0, -1);
+		rightEyeVector = cv::Point3f(0, 0, -1);
+
+
+
 		return true;
 	}
 	catch(...)
@@ -165,26 +187,6 @@ bool CGazeEstimator::Start() throw()
 	try
 	{
 		/// TODO: add your logic
-		clnf_model = LandmarkDetector::CLNF(det_parameters.model_location);
-		det_parameters.track_gaze = true;
-
-		int rows = m_inFrameImagePtr->GetHeight();
-		int cols = m_inFrameImagePtr->GetWidth();
-
-		PrepareCvImage(m_inFrameImagePtr, captured_image);
-
-		cx = rows / 2.0f;
-		cy = cols / 2.0f;
-
-		fx = 500 * ( rows / 640.0);
-		fy = 500 * ( cols / 480.0);
-
-		fx = (fx + fy) / 2.0;
-		fy = fx;
-
-		leftEyeVector = cv::Point3f(0, 0, -1);
-		rightEyeVector = cv::Point3f(0, 0, -1);
-
 		return true;
 	}
 	catch(...)
@@ -254,6 +256,9 @@ bool CGazeEstimator::Execute() throw()
 		m_outGazeEstimateLeftPtr->SetValue(leftEyeVector.x, leftEyeVector.y, leftEyeVector.z );
 		m_outGazeEstimateRightPtr->SetValue(rightEyeVector.x, rightEyeVector.y, rightEyeVector.z);
 
+		m_outGazeEstimateLeftPtr->SetCreationTime(_clockPtr->GetTime());
+		m_outGazeEstimateRightPtr->SetCreationTime(_clockPtr->GetTime());
+
 	}
 	catch(...)
 	{
@@ -298,6 +303,7 @@ void CGazeEstimator::Stop() throw()
 {
 	try
 	{
+		Notify_DebugString("Stopping...\n");
 	}
 	catch(...)
 	{
@@ -316,6 +322,8 @@ void CGazeEstimator::Done() throw()
 		m_inFrameImagePtr = NULL;
 		m_outGazeEstimateLeftPtr = NULL;
 		m_outGazeEstimateRightPtr = NULL;
+
+		Notify_DebugString("We are done\n");
 
 	}
 	catch(...)
