@@ -524,7 +524,6 @@ void CLNF::Read(string main_location)
 		else if (module.compare("DetectionValidator") == 0)
 		{            
 			cout << "Reading the landmark validation module....";
-			cout << location << endl;
 			landmark_validator.Read(location);
 			cout << "Done" << endl;
 		}

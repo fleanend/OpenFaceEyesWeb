@@ -3,22 +3,12 @@
 #include "Signature.h"
 #include "resource.h"
 #include "include/LandmarkDetectorModel.h"
-#include "GazeEstimation.h"
+#include "include/GazeEstimation.h"
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 using namespace Eyw;
 
-
-// For subpixel accuracy drawing
-const int gaze_draw_shiftbits = 4;
-const int gaze_draw_multiplier = 1 << 4;
-
-float fx, fy, cx, cy; //focal length e optical axis centre
-
-LandmarkDetector::CLNF clnf_model;
-LandmarkDetector::FaceModelParameters det_parameters;
-
-cv::Point3f leftEyeVector; 
-cv::Point3f rightEyeVector;
 
 //////////////////////////////////////////////////////////
 /// <summary>
@@ -176,12 +166,18 @@ bool CGazeEstimator::Start() throw()
 	{
 		/// TODO: add your logic
 		clnf_model = LandmarkDetector::CLNF(det_parameters.model_location);
+		det_parameters.track_gaze = true;
 
-		cx = m_inFrameImagePtr->GetWidth() / 2.0f;
-		cy = m_inFrameImagePtr->GetHeight() / 2.0f;
+		int rows = m_inFrameImagePtr->GetHeight();
+		int cols = m_inFrameImagePtr->GetWidth();
 
-		fx = 500 * ( m_inFrameImagePtr->GetWidth() / 640.0);
-		fy = 500 * ( m_inFrameImagePtr->GetHeight() / 480.0);
+		PrepareCvImage(m_inFrameImagePtr, captured_image);
+
+		cx = rows / 2.0f;
+		cy = cols / 2.0f;
+
+		fx = 500 * ( rows / 640.0);
+		fy = 500 * ( cols / 480.0);
 
 		fx = (fx + fy) / 2.0;
 		fy = fx;
@@ -210,10 +206,50 @@ bool CGazeEstimator::Execute() throw()
 	try
 	{
 		/// TODO: add your logic
+		/*
+		// Reading the images
+		cv::Mat_<float> depth_image;
+		cv::Mat_<uchar> grayscale_image;
 
-		FaceAnalysis::EstimateGaze(clnf_model, leftEyeVector, fx, fy, cx, cy, true);
-		FaceAnalysis::EstimateGaze(clnf_model, rightEyeVector, fx, fy, cx, cy, false);
+		if(captured_image.channels() == 3)
+		{
+			cv::cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);				
+		}
+		else
+		{
+			grayscale_image = captured_image.clone();				
+		}
+		// Get depth image
+		if(use_depth)
+		{
+			char* dst = new char[100];
+			std::stringstream sstream;
 
+			sstream << depth_directories[f_n] << "\\depth%05d.png";
+			sprintf(dst, sstream.str().c_str(), frame_count + 1);
+			// Reading in 16-bit png image representing depth
+			cv::Mat_<short> depth_image_16_bit = cv::imread(string(dst), -1);
+
+			// Convert to a floating point depth image
+			if(!depth_image_16_bit.empty())
+			{
+				depth_image_16_bit.convertTo(depth_image, CV_32F);
+			}
+			else
+			{
+					WARN_STREAM( "Can't find depth image" );
+			}
+		}
+
+
+		bool detection_success = DetectLandmarksInVideo(grayscale_image, depth_image, clnf_model, det_parameters);
+		double detection_certainty = clnf_model.detection_certainty;
+
+		if (det_parameters.track_gaze && detection_success && clnf_model.eye_model)
+		{*/
+			FaceAnalysis::EstimateGaze(clnf_model, leftEyeVector, fx, fy, cx, cy, true);
+			FaceAnalysis::EstimateGaze(clnf_model, rightEyeVector, fx, fy, cx, cy, false);
+		//}
 
 		m_outGazeEstimateLeftPtr->SetValue(leftEyeVector.x, leftEyeVector.y, leftEyeVector.z );
 		m_outGazeEstimateRightPtr->SetValue(rightEyeVector.x, rightEyeVector.y, rightEyeVector.z);
@@ -224,6 +260,34 @@ bool CGazeEstimator::Execute() throw()
 	}
 	return true;
 }
+
+	void CGazeEstimator::PrepareCvImage(const image_ptr& sourceImagePtr, cv::Mat &destinationImage)
+	{
+		BOOST_ASSERT(sourceImagePtr);		
+
+		try
+		{
+			if (!sourceImagePtr)
+				return;
+			const RECT_2D_INT roi = sourceImagePtr->GetROI();
+
+			int width, height, step;
+			width = sourceImagePtr->GetWidth();
+			height = sourceImagePtr->GetHeight();
+			step = sourceImagePtr->GetStepSize();
+			if (sourceImagePtr->GetColorModel() == Eyw::ecmBW)
+				destinationImage = *(new cv::Mat(height, width, CV_8UC1, sourceImagePtr->GetBuffer(), step));
+			if ((sourceImagePtr->GetColorModel() == Eyw::ecmRGB) || (sourceImagePtr->GetColorModel() == Eyw::ecmBGR))
+				destinationImage = *(new cv::Mat(height, width, CV_8UC3, sourceImagePtr->GetBuffer(), step));
+			return;
+			
+		}
+		catch (const IException&)
+		{
+			return;
+		}
+	}
+
 
 //////////////////////////////////////////////////////////
 /// <summary>

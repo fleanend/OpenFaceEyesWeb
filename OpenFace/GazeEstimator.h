@@ -1,6 +1,9 @@
 #pragma once
-
+#include "StdAfx.h"
 #include "BaseCatalog/EywGeometricVector3D.h"
+#include <opencv2/core/mat.hpp>
+#include "LandmarkDetectorParameters.h"
+#include "LandmarkDetectorModel.h"
 
 
 class CGazeEstimator : public Eyw::CBlockImpl
@@ -73,6 +76,8 @@ protected:
 	/// </returns>
 	//////////////////////////////////////////////////////////
 	virtual bool Execute() throw();
+	
+
 
 	//////////////////////////////////////////////////////////
 	/// <summary>
@@ -104,5 +109,20 @@ private:
 	Eyw::image_ptr m_inFrameImagePtr;
 	Eyw::vector3d_double_ptr m_outGazeEstimateLeftPtr;
 	Eyw::vector3d_double_ptr m_outGazeEstimateRightPtr;
+	void PrepareCvImage(const Eyw::image_ptr& sourceImagePtr, cv::Mat& destinationImage);
+
+	// For subpixel accuracy drawing
+	const int gaze_draw_shiftbits = 4;
+	const int gaze_draw_multiplier = 1 << 4;
+
+	float fx, fy, cx, cy; //focal length e optical axis centre
+
+	LandmarkDetector::CLNF clnf_model;
+	LandmarkDetector::FaceModelParameters det_parameters;
+
+	cv::Point3f leftEyeVector; 
+	cv::Point3f rightEyeVector;
+
+	cv::Mat captured_image;
 
 };

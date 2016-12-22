@@ -133,7 +133,7 @@ void get_video_input_output_params(vector<string> &input_video_files, vector<str
 	// By default use rotation with respect to camera (not world coordinates)
 	world_coordinates_pose = false;
 
-    // By default use DIVX codec
+	// By default use DIVX codec
 	output_codec = "DIVX";
 
 	string input_root = "";
@@ -499,22 +499,22 @@ void get_image_input_output_params(vector<string> &input_image_files, vector<str
 void crossCorr_m( const cv::Mat_<float>& img, cv::Mat_<double>& img_dft, const cv::Mat_<float>& _templ, map<int, cv::Mat_<double> >& _templ_dfts, cv::Mat_<float>& corr)
 {
 	// Our model will always be under min block size so can ignore this
-    //const double blockScale = 4.5;
-    //const int minBlockSize = 256;
+	//const double blockScale = 4.5;
+	//const int minBlockSize = 256;
 
 	int maxDepth = CV_64F;
 
 	cv::Size dftsize;
 	
-    dftsize.width = cv::getOptimalDFTSize(corr.cols + _templ.cols - 1);
-    dftsize.height = cv::getOptimalDFTSize(corr.rows + _templ.rows - 1);
+	dftsize.width = cv::getOptimalDFTSize(corr.cols + _templ.cols - 1);
+	dftsize.height = cv::getOptimalDFTSize(corr.rows + _templ.rows - 1);
 
-    // Compute block size
+	// Compute block size
 	cv::Size blocksize;
-    blocksize.width = dftsize.width - _templ.cols + 1;
-    blocksize.width = MIN( blocksize.width, corr.cols );
-    blocksize.height = dftsize.height - _templ.rows + 1;
-    blocksize.height = MIN( blocksize.height, corr.rows );
+	blocksize.width = dftsize.width - _templ.cols + 1;
+	blocksize.width = MIN( blocksize.width, corr.cols );
+	blocksize.height = dftsize.height - _templ.rows + 1;
+	blocksize.height = MIN( blocksize.height, corr.rows );
 	
 	cv::Mat_<double> dftTempl;
 
@@ -595,11 +595,11 @@ void crossCorr_m( const cv::Mat_<float>& img, cv::Mat_<double>& img_dft, const c
 void matchTemplate_m(  const cv::Mat_<float>& input_img, cv::Mat_<double>& img_dft, cv::Mat& _integral_img, cv::Mat& _integral_img_sq, const cv::Mat_<float>&  templ, map<int, cv::Mat_<double> >& templ_dfts, cv::Mat_<float>& result, int method )
 {
 
-        int numType = method == CV_TM_CCORR || method == CV_TM_CCORR_NORMED ? 0 :
-                  method == CV_TM_CCOEFF || method == CV_TM_CCOEFF_NORMED ? 1 : 2;
-    bool isNormed = method == CV_TM_CCORR_NORMED ||
-                    method == CV_TM_SQDIFF_NORMED ||
-                    method == CV_TM_CCOEFF_NORMED;
+		int numType = method == CV_TM_CCORR || method == CV_TM_CCORR_NORMED ? 0 :
+				  method == CV_TM_CCOEFF || method == CV_TM_CCOEFF_NORMED ? 1 : 2;
+	bool isNormed = method == CV_TM_CCORR_NORMED ||
+					method == CV_TM_SQDIFF_NORMED ||
+					method == CV_TM_CCOEFF_NORMED;
 	
 	// Assume result is defined properly
 	if(result.empty())
@@ -607,20 +607,20 @@ void matchTemplate_m(  const cv::Mat_<float>& input_img, cv::Mat_<double>& img_d
 		cv::Size corrSize(input_img.cols - templ.cols + 1, input_img.rows - templ.rows + 1);
 		result.create(corrSize);
 	}
-    LandmarkDetector::crossCorr_m( input_img, img_dft, templ, templ_dfts, result);
+	LandmarkDetector::crossCorr_m( input_img, img_dft, templ, templ_dfts, result);
 
-    if( method == CV_TM_CCORR )
-        return;
+	if( method == CV_TM_CCORR )
+		return;
 
-    double invArea = 1./((double)templ.rows * templ.cols);
+	double invArea = 1./((double)templ.rows * templ.cols);
 
 	cv::Mat sum, sqsum;
 	cv::Scalar templMean, templSdv;
-    double *q0 = 0, *q1 = 0, *q2 = 0, *q3 = 0;
-    double templNorm = 0, templSum2 = 0;
+	double *q0 = 0, *q1 = 0, *q2 = 0, *q3 = 0;
+	double templNorm = 0, templSum2 = 0;
 
-    if( method == CV_TM_CCOEFF )
-    {
+	if( method == CV_TM_CCOEFF )
+	{
 		// If it has not been precomputed compute it now
 		if(_integral_img.empty())
 		{
@@ -628,10 +628,10 @@ void matchTemplate_m(  const cv::Mat_<float>& input_img, cv::Mat_<double>& img_d
 		}
 		sum = _integral_img;
 
-        templMean = cv::mean(templ);
-    }
-    else
-    {
+		templMean = cv::mean(templ);
+	}
+	else
+	{
 		// If it has not been precomputed compute it now
 		if(_integral_img.empty())
 		{
@@ -641,92 +641,92 @@ void matchTemplate_m(  const cv::Mat_<float>& input_img, cv::Mat_<double>& img_d
 		sum = _integral_img;
 		sqsum = _integral_img_sq;
 
-        meanStdDev( templ, templMean, templSdv );
+		meanStdDev( templ, templMean, templSdv );
 
-        templNorm = templSdv[0]*templSdv[0] + templSdv[1]*templSdv[1] + templSdv[2]*templSdv[2] + templSdv[3]*templSdv[3];
+		templNorm = templSdv[0]*templSdv[0] + templSdv[1]*templSdv[1] + templSdv[2]*templSdv[2] + templSdv[3]*templSdv[3];
 
-        if( templNorm < DBL_EPSILON && method == CV_TM_CCOEFF_NORMED )
-        {
+		if( templNorm < DBL_EPSILON && method == CV_TM_CCOEFF_NORMED )
+		{
 			result.setTo(1.0);
-            return;
-        }
+			return;
+		}
 
-        templSum2 = templNorm + templMean[0]*templMean[0] + templMean[1]*templMean[1] + templMean[2]*templMean[2] + templMean[3]*templMean[3];
+		templSum2 = templNorm + templMean[0]*templMean[0] + templMean[1]*templMean[1] + templMean[2]*templMean[2] + templMean[3]*templMean[3];
 
-        if( numType != 1 )
-        {
-            templMean = cv::Scalar::all(0);
-            templNorm = templSum2;
-        }
+		if( numType != 1 )
+		{
+			templMean = cv::Scalar::all(0);
+			templNorm = templSum2;
+		}
 
-        templSum2 /= invArea;
-        templNorm = std::sqrt(templNorm);
-        templNorm /= std::sqrt(invArea); // care of accuracy here
+		templSum2 /= invArea;
+		templNorm = std::sqrt(templNorm);
+		templNorm /= std::sqrt(invArea); // care of accuracy here
 
-        q0 = (double*)sqsum.data;
-        q1 = q0 + templ.cols;
-        q2 = (double*)(sqsum.data + templ.rows*sqsum.step);
-        q3 = q2 + templ.cols;
-    }
+		q0 = (double*)sqsum.data;
+		q1 = q0 + templ.cols;
+		q2 = (double*)(sqsum.data + templ.rows*sqsum.step);
+		q3 = q2 + templ.cols;
+	}
 
-    double* p0 = (double*)sum.data;
-    double* p1 = p0 + templ.cols;
-    double* p2 = (double*)(sum.data + templ.rows*sum.step);
-    double* p3 = p2 + templ.cols;
+	double* p0 = (double*)sum.data;
+	double* p1 = p0 + templ.cols;
+	double* p2 = (double*)(sum.data + templ.rows*sum.step);
+	double* p3 = p2 + templ.cols;
 
-    int sumstep = sum.data ? (int)(sum.step / sizeof(double)) : 0;
-    int sqstep = sqsum.data ? (int)(sqsum.step / sizeof(double)) : 0;
+	int sumstep = sum.data ? (int)(sum.step / sizeof(double)) : 0;
+	int sqstep = sqsum.data ? (int)(sqsum.step / sizeof(double)) : 0;
 
-    int i, j;
+	int i, j;
 
-    for( i = 0; i < result.rows; i++ )
-    {
-        float* rrow = result.ptr<float>(i);
-        int idx = i * sumstep;
-        int idx2 = i * sqstep;
+	for( i = 0; i < result.rows; i++ )
+	{
+		float* rrow = result.ptr<float>(i);
+		int idx = i * sumstep;
+		int idx2 = i * sqstep;
 
-        for( j = 0; j < result.cols; j++, idx += 1, idx2 += 1 )
-        {
-            double num = rrow[j], t;
-            double wndMean2 = 0, wndSum2 = 0;
+		for( j = 0; j < result.cols; j++, idx += 1, idx2 += 1 )
+		{
+			double num = rrow[j], t;
+			double wndMean2 = 0, wndSum2 = 0;
 
-            if( numType == 1 )
-            {
+			if( numType == 1 )
+			{
 
-                t = p0[idx] - p1[idx] - p2[idx] + p3[idx];
-                wndMean2 += t*t;
-                num -= t*templMean[0];
+				t = p0[idx] - p1[idx] - p2[idx] + p3[idx];
+				wndMean2 += t*t;
+				num -= t*templMean[0];
 
-                wndMean2 *= invArea;
-            }
+				wndMean2 *= invArea;
+			}
 
-            if( isNormed || numType == 2 )
-            {
+			if( isNormed || numType == 2 )
+			{
 
-                t = q0[idx2] - q1[idx2] - q2[idx2] + q3[idx2];
-                wndSum2 += t;
+				t = q0[idx2] - q1[idx2] - q2[idx2] + q3[idx2];
+				wndSum2 += t;
 
-                if( numType == 2 )
-                {
-                    num = wndSum2 - 2*num + templSum2;
-                    num = MAX(num, 0.);
-                }
-            }
+				if( numType == 2 )
+				{
+					num = wndSum2 - 2*num + templSum2;
+					num = MAX(num, 0.);
+				}
+			}
 
-            if( isNormed )
-            {
-                t = std::sqrt(MAX(wndSum2 - wndMean2,0))*templNorm;
-                if( fabs(num) < t )
-                    num /= t;
-                else if( fabs(num) < t*1.125 )
-                    num = num > 0 ? 1 : -1;
-                else
-                    num = method != CV_TM_SQDIFF_NORMED ? 0 : 1;
-            }
+			if( isNormed )
+			{
+				t = std::sqrt(MAX(wndSum2 - wndMean2,0))*templNorm;
+				if( fabs(num) < t )
+					num /= t;
+				else if( fabs(num) < t*1.125 )
+					num = num > 0 ? 1 : -1;
+				else
+					num = method != CV_TM_SQDIFF_NORMED ? 0 : 1;
+			}
 
-            rrow[j] = (float)num;
-        }
-    }
+			rrow[j] = (float)num;
+		}
+	}
 }
 
 
@@ -739,7 +739,7 @@ cv::Matx22d AlignShapesKabsch2D(const cv::Mat_<double>& align_from, const cv::Ma
 {
 
 	cv::SVD svd(align_from.t() * align_to);
-    
+	
 	// make sure no reflection is there
 	// corr ensures that we do only rotaitons and not reflections
 	double d = cv::determinant(svd.vt.t() * svd.u.t());
@@ -807,7 +807,7 @@ cv::Matx22d AlignShapesWithScale(cv::Mat_<double>& src, cv::Mat_<double> dst)
 
 	double t_x =  cv::mean(offset.col(0))[0];
 	double t_y =  cv::mean(offset.col(1))[0];
-    
+	
 	return A;
 
 }
@@ -1257,7 +1257,7 @@ cv::Vec3d RotationMatrix2Euler(const cv::Matx33d& rotation_matrix)
 	double yaw  = asin(2.0 * (q0*q2 + q1*q3));
 	double pitch= atan2(2.0 * (q0*q1-q2*q3), q0*q0-q1*q1-q2*q2+q3*q3); 
 	double roll = atan2(2.0 * (q0*q3-q1*q2), q0*q0+q1*q1-q2*q2-q3*q3);
-    
+	
 	return cv::Vec3d(pitch, yaw, roll);
 }
 
