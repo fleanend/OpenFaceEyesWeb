@@ -125,4 +125,6 @@ private:
 
 	cv::Mat captured_image;
 
+	int frame_count = 0;
+
 };

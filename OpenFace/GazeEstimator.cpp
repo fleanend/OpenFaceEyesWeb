@@ -9,7 +9,6 @@
 
 using namespace Eyw;
 
-
 //////////////////////////////////////////////////////////
 /// <summary>
 /// Block Signature.
@@ -143,28 +142,9 @@ bool CGazeEstimator::Init() throw()
 		m_inFrameImagePtr = get_input_datatype<Eyw::IImage>( IN_FRAMEIMAGE );
 		m_outGazeEstimateLeftPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATELEFT );
 		m_outGazeEstimateRightPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATERIGHT );
-
+		
 		clnf_model = LandmarkDetector::CLNF(det_parameters.model_location);
 		det_parameters.track_gaze = true;
-
-		int rows = m_inFrameImagePtr->GetHeight();
-		int cols = m_inFrameImagePtr->GetWidth();
-
-		PrepareCvImage(m_inFrameImagePtr, captured_image);
-
-		cx = rows / 2.0f;
-		cy = cols / 2.0f;
-
-		fx = 500 * ( rows / 640.0);
-		fy = 500 * ( cols / 480.0);
-
-		fx = (fx + fy) / 2.0;
-		fy = fx;
-
-		leftEyeVector = cv::Point3f(0, 0, -1);
-		rightEyeVector = cv::Point3f(0, 0, -1);
-
-
 
 		return true;
 	}
@@ -207,61 +187,68 @@ bool CGazeEstimator::Execute() throw()
 {
 	try
 	{
-		/// TODO: add your logic
-		/*
-		// Reading the images
-		cv::Mat_<float> depth_image;
-		cv::Mat_<uchar> grayscale_image;
+		int rows = m_inFrameImagePtr->GetHeight();
+		int cols = m_inFrameImagePtr->GetWidth();
 
-		if(captured_image.channels() == 3)
-		{
-			cv::cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);				
-		}
-		else
-		{
-			grayscale_image = captured_image.clone();				
-		}
-		// Get depth image
-		if(use_depth)
-		{
-			char* dst = new char[100];
-			std::stringstream sstream;
+		PrepareCvImage(m_inFrameImagePtr, captured_image);
 
-			sstream << depth_directories[f_n] << "\\depth%05d.png";
-			sprintf(dst, sstream.str().c_str(), frame_count + 1);
-			// Reading in 16-bit png image representing depth
-			cv::Mat_<short> depth_image_16_bit = cv::imread(string(dst), -1);
+		cx = rows / 2.0f;
+		cy = cols / 2.0f;
 
-			// Convert to a floating point depth image
-			if(!depth_image_16_bit.empty())
+		fx = 500 * ( rows / 640.0);
+		fy = 500 * ( cols / 480.0);
+
+		fx = (fx + fy) / 2.0;
+		fy = fx;
+
+		if(!captured_image.empty())
+		{
+			// Reading the images
+			cv::Mat_<uchar> grayscale_image;
+
+			if(captured_image.channels() == 3)
 			{
-				depth_image_16_bit.convertTo(depth_image, CV_32F);
+				cv::cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);				
 			}
 			else
 			{
-					WARN_STREAM( "Can't find depth image" );
+				grayscale_image = captured_image.clone();				
 			}
+
+
+			bool detection_success = DetectLandmarksInVideo(grayscale_image, clnf_model, det_parameters);
+			double detection_certainty = clnf_model.detection_certainty;
+
+			leftEyeVector = cv::Point3f(0, 0, -1);
+			rightEyeVector = cv::Point3f(0, 0, -1);
+
+
+			if (det_parameters.track_gaze && detection_success && clnf_model.eye_model)
+			{
+				FaceAnalysis::EstimateGaze(clnf_model, leftEyeVector, fx, fy, cx, cy, true);
+				FaceAnalysis::EstimateGaze(clnf_model, rightEyeVector, fx, fy, cx, cy, false);
+			}
+
+			m_outGazeEstimateLeftPtr->SetValue(leftEyeVector.x, leftEyeVector.y, leftEyeVector.z );
+			m_outGazeEstimateRightPtr->SetValue(rightEyeVector.x, rightEyeVector.y, rightEyeVector.z);
+
+			m_outGazeEstimateLeftPtr->SetCreationTime(_clockPtr->GetTime());
+			m_outGazeEstimateRightPtr->SetCreationTime(_clockPtr->GetTime());
+
+			Notify_DebugString("Completing execute()");
+
 		}
 
+		frame_count++;
 
-		bool detection_success = DetectLandmarksInVideo(grayscale_image, depth_image, clnf_model, det_parameters);
-		double detection_certainty = clnf_model.detection_certainty;
+		/// TODO: add your logic
 
-		if (det_parameters.track_gaze && detection_success && clnf_model.eye_model)
-		{*/
-			FaceAnalysis::EstimateGaze(clnf_model, leftEyeVector, fx, fy, cx, cy, true);
-			FaceAnalysis::EstimateGaze(clnf_model, rightEyeVector, fx, fy, cx, cy, false);
-		//}
 
-		m_outGazeEstimateLeftPtr->SetValue(leftEyeVector.x, leftEyeVector.y, leftEyeVector.z );
-		m_outGazeEstimateRightPtr->SetValue(rightEyeVector.x, rightEyeVector.y, rightEyeVector.z);
-
-		m_outGazeEstimateLeftPtr->SetCreationTime(_clockPtr->GetTime());
-		m_outGazeEstimateRightPtr->SetCreationTime(_clockPtr->GetTime());
 
 	}
 	catch(...)
 	{
+		Notify_ErrorString("Exception thrown on execution");
 	}
 	return true;
 }
