@@ -105,11 +105,48 @@ protected:
 	void OnChangedParameter( const std::string& csParameterID );
 
 private:
-	Eyw::bool_ptr m_parParameterPinPtr;
+	/*
+	 *
+	 *	PARAMETERS
+	 *
+	 */
+
+	//bool ptrs
+	Eyw::bool_ptr m_limit_posePinPtr;
+	Eyw::bool_ptr m_refine_hierarchicalPinPtr;
+	Eyw::bool_ptr m_refine_parametersPinPtr;
+
+	//int ptrs
+	Eyw::int_ptr m_num_optimisation_iterationPinPtr;
+	Eyw::int_ptr m_reinit_video_everyPinPtr;
+
+	//double ptrs
+	Eyw::double_ptr m_validation_boundaryPinPtr;
+	Eyw::double_ptr m_sigmaPinPtr;
+	Eyw::double_ptr m_reg_factorPinPtr;
+	Eyw::double_ptr m_weight_factorPinPtr;
+	Eyw::double_ptr m_fxPinPtr;
+	Eyw::double_ptr m_fyPinPtr;
+	Eyw::double_ptr m_cxPinPtr;
+	Eyw::double_ptr m_cyPinPtr;
+
+	/*
+	 *
+	 *	INPUTS AND OUTPUTS
+	 *
+	 */
 	Eyw::image_ptr m_inFrameImagePtr;
 	Eyw::vector3d_double_ptr m_outGazeEstimateLeftPtr;
 	Eyw::vector3d_double_ptr m_outGazeEstimateRightPtr;
+
+	//utility function
 	void PrepareCvImage(const Eyw::image_ptr& sourceImagePtr, cv::Mat& destinationImage);
+
+	/*
+	 *
+	 *	INTERNAL DATA
+	 *
+	 */
 
 	// For subpixel accuracy drawing
 	const int gaze_draw_shiftbits = 4;
@@ -118,7 +155,7 @@ private:
 	float fx, fy, cx, cy; //focal length e optical axis centre
 
 	LandmarkDetector::CLNF clnf_model;
-	LandmarkDetector::FaceModelParameters det_parameters;
+	LandmarkDetector::FaceModelParameters det_parameters = LandmarkDetector::FaceModelParameters();
 
 	cv::Point3f leftEyeVector; 
 	cv::Point3f rightEyeVector;
@@ -126,5 +163,8 @@ private:
 	cv::Mat captured_image;
 
 	int frame_count = 0;
+
+	bool cx_undefined = false;
+	bool fx_undefined = false;
 
 };

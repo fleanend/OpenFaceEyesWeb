@@ -35,7 +35,22 @@ Eyw::block_class_registrant g_GazeEstimator(
 
 //////////////////////////////////////////////////////////
 // Identifiers
-#define PAR_PARAMETERPIN "parameterPin"
+#define PAR_LIMIT_POSE "limit_posePin" //bool
+#define PAR_REFINE_HIERARCHICAL "refine_hierarchicalPin" //bool
+#define PAR_REFINE_PARAMETERS "refine_parametersPin" //bool
+
+#define PAR_REINIT_VIDEO_EVERY "reinit_video_everyPin" //int
+#define PAR_NUM_OPTIMIZATION_ITERATION "num_optimisation_iterationPin" //int
+
+#define PAR_VALIDATION_BOUNDARY "validation_boundaryPin" //double
+#define PAR_SIGMA "sigmaPin" //double
+#define PAR_REG_FACTOR "reg_factorPin" //double
+#define PAR_WEIGHT_FACTOR "weight_factorPin" //double
+#define PAR_FX "fxPin" //double
+#define PAR_FY "fyPin" //double
+#define PAR_CX "cxPin" //double
+#define PAR_CY "cyPin" //double
+
 #define IN_FRAMEIMAGE "Frame/Image"
 #define OUT_GAZEESTIMATELEFT "GazeEstimateLeft"
 #define OUT_GAZEESTIMATERIGHT "GazeEstimateRight"
@@ -74,12 +89,125 @@ CGazeEstimator::~CGazeEstimator()
 //////////////////////////////////////////////////////////
 void CGazeEstimator::InitSignature()
 {	 
-	m_parParameterPinPtr= Eyw::Cast<Eyw::IBool*>(
-						 SetParameter(Eyw::pin::id(PAR_PARAMETERPIN)
-							 .name("parameterPin")
-							 .description("Not sure if needed")
+	m_limit_posePinPtr= Eyw::Cast<Eyw::IBool*>(
+						 SetParameter(Eyw::pin::id(PAR_LIMIT_POSE)
+							 .name("Limit Pose")
+							 .description("Should pose be limited to 180 degrees frontal")
 							 .type<Eyw::IBool>()
 							 )->GetDatatype() );
+	m_limit_posePinPtr->SetValue(true);
+
+	m_refine_hierarchicalPinPtr= Eyw::Cast<Eyw::IBool*>(
+						 SetParameter(Eyw::pin::id(PAR_REFINE_HIERARCHICAL)
+							 .name("Refine Hierarchical")
+							 .description("Should the model be refined hierarchically (if available)")
+							 .type<Eyw::IBool>()
+							 )->GetDatatype() );
+	m_refine_hierarchicalPinPtr->SetValue(true);
+
+	m_refine_parametersPinPtr= Eyw::Cast<Eyw::IBool*>(
+						 SetParameter(Eyw::pin::id(PAR_REFINE_PARAMETERS)
+							 .name("Refine Parameters")
+							 .description("Should the parameters be refined for different scales")
+							 .type<Eyw::IBool>()
+							 )->GetDatatype() );
+	m_refine_parametersPinPtr->SetValue(true);
+
+	m_num_optimisation_iterationPinPtr= Eyw::Cast<Eyw::IInt*>(
+						 SetParameter(Eyw::pin::id(PAR_NUM_OPTIMIZATION_ITERATION)
+							 .name("Number of optimisation iterations")
+							 .description("A number of RLMS or NU-RLMS iterations")
+							 .type<Eyw::IInt>()
+							 .set_int_domain()
+							 .min(0)
+							 )->GetDatatype() );
+	m_num_optimisation_iterationPinPtr->SetValue(5);
+
+	m_reinit_video_everyPinPtr= Eyw::Cast<Eyw::IInt*>(
+						 SetParameter(Eyw::pin::id(PAR_NUM_OPTIMIZATION_ITERATION)
+							 .name("Reinit video every n frames")
+							 .description("How often should face detection be used to attempt reinitialisation, every n frames (set to negative not to reinit)")
+							 .type<Eyw::IInt>()
+							 )->GetDatatype() );
+	m_reinit_video_everyPinPtr->SetValue(4);
+
+
+
+	m_validation_boundaryPinPtr= Eyw::Cast<Eyw::IDouble*>(
+						 SetParameter(Eyw::pin::id(PAR_VALIDATION_BOUNDARY)
+							 .name("Validation boundary")
+							 .description("Landmark detection validator boundary for correct detection, the regressor output -1 (perfect alignment) 1 (bad alignment),")
+							 .type<Eyw::IDouble>()
+							 )->GetDatatype() );
+	m_validation_boundaryPinPtr->SetValue(-0.45);
+
+	m_sigmaPinPtr= Eyw::Cast<Eyw::IDouble*>(
+						 SetParameter(Eyw::pin::id(PAR_SIGMA)
+							 .name("Sigma")
+							 .description("Used for the smooting of response maps (KDE sigma)")
+							 .type<Eyw::IDouble>()
+							 .set_double_domain()
+							 .min(0)
+							 )->GetDatatype() );
+	m_sigmaPinPtr->SetValue(1.5);
+
+	m_reg_factorPinPtr= Eyw::Cast<Eyw::IDouble*>(
+						 SetParameter(Eyw::pin::id(PAR_REG_FACTOR)
+							 .name("Regularization factor")
+							 .description("Weight put to regularisation")
+							 .type<Eyw::IDouble>()
+							 .set_double_domain()
+							 .min(0)
+							 )->GetDatatype() );
+	m_reg_factorPinPtr->SetValue(25);
+
+	m_weight_factorPinPtr= Eyw::Cast<Eyw::IDouble*>(
+						 SetParameter(Eyw::pin::id(PAR_WEIGHT_FACTOR)
+							 .name("Weight factor")
+							 .description("Factor for weighted least squares. By default 0, as for videos doesn't work well")
+							 .type<Eyw::IDouble>()
+							 .set_double_domain()
+							 .min(0)
+							 )->GetDatatype() );
+
+	m_fxPinPtr= Eyw::Cast<Eyw::IDouble*>(
+						 SetParameter(Eyw::pin::id(PAR_FX)
+							 .name("Focal X")
+							 .description("Focal length X coordinate")
+							 .type<Eyw::IDouble>()
+							 .set_double_domain()
+							 .min(0)
+							 )->GetDatatype() );
+
+
+	m_fyPinPtr= Eyw::Cast<Eyw::IDouble*>(
+						 SetParameter(Eyw::pin::id(PAR_FY)
+							 .name("Focal Y")
+							 .description("Focal length Y coordinate")
+							 .type<Eyw::IDouble>()
+							 .set_double_domain()
+							 .min(0)
+							 )->GetDatatype() );
+
+	m_cxPinPtr= Eyw::Cast<Eyw::IDouble*>(
+						 SetParameter(Eyw::pin::id(PAR_CX)
+							 .name("Optical center X")
+							 .description("Optical X axis center")
+							 .type<Eyw::IDouble>()
+							 .set_double_domain()
+							 .min(0)
+							 )->GetDatatype() );
+
+	m_cyPinPtr= Eyw::Cast<Eyw::IDouble*>(
+						 SetParameter(Eyw::pin::id(PAR_CY)
+							 .name("Optical center Y")
+							 .description("Optical Y axis center")
+							 .type<Eyw::IDouble>()
+							 .set_double_domain()
+							 .min(0)
+							 )->GetDatatype() );
+
+
 	SetInput(Eyw::pin::id(IN_FRAMEIMAGE)
 		.name("Frame/Image")
 		.description("Input Image or Frame")
@@ -105,7 +233,25 @@ void CGazeEstimator::InitSignature()
 //////////////////////////////////////////////////////////
 void CGazeEstimator::CheckSignature()
 {
-	m_parParameterPinPtr=get_parameter_datatype<Eyw::IBool>(PAR_PARAMETERPIN);
+	m_limit_posePinPtr=get_parameter_datatype<Eyw::IBool>(PAR_LIMIT_POSE);
+	m_refine_hierarchicalPinPtr=get_parameter_datatype<Eyw::IBool>(PAR_REFINE_HIERARCHICAL);
+	m_refine_parametersPinPtr=get_parameter_datatype<Eyw::IBool>(PAR_REFINE_PARAMETERS);
+
+	//int ptrs
+	m_num_optimisation_iterationPinPtr=get_parameter_datatype<Eyw::IInt>(PAR_NUM_OPTIMIZATION_ITERATION);
+	m_reinit_video_everyPinPtr=get_parameter_datatype<Eyw::IInt>(PAR_REINIT_VIDEO_EVERY);
+
+	//double ptrs
+	m_validation_boundaryPinPtr=get_parameter_datatype<Eyw::IDouble>(PAR_VALIDATION_BOUNDARY);
+	m_sigmaPinPtr=get_parameter_datatype<Eyw::IDouble>(PAR_SIGMA);
+	m_reg_factorPinPtr=get_parameter_datatype<Eyw::IDouble>(PAR_REG_FACTOR);
+	m_weight_factorPinPtr=get_parameter_datatype<Eyw::IDouble>(PAR_WEIGHT_FACTOR);
+	m_fxPinPtr=get_parameter_datatype<Eyw::IDouble>(PAR_FX);
+	m_fyPinPtr=get_parameter_datatype<Eyw::IDouble>(PAR_FY);
+	m_cxPinPtr=get_parameter_datatype<Eyw::IDouble>(PAR_CX);
+	m_cyPinPtr=get_parameter_datatype<Eyw::IDouble>(PAR_CY);
+
+
 	_signaturePtr->GetInputs()->FindItem( IN_FRAMEIMAGE );
 	_signaturePtr->GetOutputs()->FindItem( OUT_GAZEESTIMATELEFT );
 	_signaturePtr->GetOutputs()->FindItem( OUT_GAZEESTIMATERIGHT );
@@ -119,7 +265,23 @@ void CGazeEstimator::CheckSignature()
 //////////////////////////////////////////////////////////
 void CGazeEstimator::DoneSignature()
 {
-	m_parParameterPinPtr=NULL;
+	m_limit_posePinPtr=NULL;
+	m_refine_hierarchicalPinPtr=NULL;
+	m_refine_parametersPinPtr=NULL;
+
+	//int ptrs
+	m_num_optimisation_iterationPinPtr=NULL;
+	m_reinit_video_everyPinPtr=NULL;
+
+	//double ptrs
+	m_validation_boundaryPinPtr=NULL;
+	m_sigmaPinPtr=NULL;
+	m_reg_factorPinPtr=NULL;
+	m_weight_factorPinPtr=NULL;
+	m_fxPinPtr=NULL;
+	m_fyPinPtr=NULL;
+	m_cxPinPtr=NULL;
+	m_cyPinPtr=NULL;
 
 }
 
@@ -144,7 +306,34 @@ bool CGazeEstimator::Init() throw()
 		m_outGazeEstimateRightPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATERIGHT );
 		
 		clnf_model = LandmarkDetector::CLNF(det_parameters.model_location);
+
 		det_parameters.track_gaze = true;
+		det_parameters.limit_pose = m_limit_posePinPtr->GetValue();
+		det_parameters.refine_hierarchical = m_refine_hierarchicalPinPtr->GetValue();
+		det_parameters.refine_parameters = m_refine_parametersPinPtr->GetValue();
+
+		det_parameters.num_optimisation_iteration = m_num_optimisation_iterationPinPtr->GetValue();
+		det_parameters.reinit_video_every = m_reinit_video_everyPinPtr->GetValue();
+
+		det_parameters.reg_factor = m_reg_factorPinPtr->GetValue();
+		det_parameters.weight_factor = m_weight_factorPinPtr->GetValue();
+		det_parameters.sigma = m_sigmaPinPtr->GetValue();
+		det_parameters.validation_boundary = m_validation_boundaryPinPtr->GetValue();
+
+		if (m_fxPinPtr->GetValue() == 0.0 || m_fyPinPtr->GetValue() == 0.0)
+		{
+			Notify_DebugString("fx_undefined is true\n");
+			fx_undefined = true;
+		}
+			
+
+		if (m_cxPinPtr->GetValue() == 0.0 || m_cyPinPtr->GetValue() == 0.0)
+		{
+			Notify_DebugString("cx_undefined is true\n");
+			cx_undefined = true;
+		}
+			
+
 
 		return true;
 	}
@@ -192,14 +381,32 @@ bool CGazeEstimator::Execute() throw()
 
 		PrepareCvImage(m_inFrameImagePtr, captured_image);
 
-		cx = rows / 2.0f;
-		cy = cols / 2.0f;
+		if(cx_undefined)
+		{
+			cx = rows / 2.0f;
+			cy = cols / 2.0f;
+			
+		} else
+		{
+			cx = m_cxPinPtr->GetValue();
+			cy = m_cyPinPtr->GetValue();
+		}
 
-		fx = 500 * ( rows / 640.0);
-		fy = 500 * ( cols / 480.0);
 
-		fx = (fx + fy) / 2.0;
-		fy = fx;
+		if(fx_undefined)
+		{
+			fx = 500 * ( rows / 640.0);
+			fy = 500 * ( cols / 480.0);
+
+			fx = (fx + fy) / 2.0;
+			fy = fx;	
+		} else
+		{
+			fx = m_fxPinPtr->GetValue();
+			fy = m_fyPinPtr->GetValue();
+
+		}
+
 
 		if(!captured_image.empty())
 		{
@@ -331,4 +538,45 @@ void CGazeEstimator::Done() throw()
 void CGazeEstimator::OnChangedParameter( const std::string& csParameterID )
 {
 	/// TODO: manage the changed parameters
+	if(IsRunTime())
+	{
+		clnf_model.Reset();
+		if (csParameterID == PAR_LIMIT_POSE)
+			det_parameters.limit_pose = m_limit_posePinPtr->GetValue();
+		else if (csParameterID == PAR_NUM_OPTIMIZATION_ITERATION)
+			det_parameters.num_optimisation_iteration = m_num_optimisation_iterationPinPtr->GetValue();
+		else if (csParameterID == PAR_REFINE_HIERARCHICAL)
+			det_parameters.refine_hierarchical = m_refine_hierarchicalPinPtr->GetValue();
+
+		else if (csParameterID == PAR_REFINE_PARAMETERS)
+			det_parameters.refine_parameters = m_refine_parametersPinPtr->GetValue();
+
+		else if (csParameterID == PAR_REG_FACTOR)
+			det_parameters.reg_factor = m_reg_factorPinPtr->GetValue();
+
+		else if (csParameterID == PAR_REINIT_VIDEO_EVERY)
+			det_parameters.reinit_video_every = m_reinit_video_everyPinPtr->GetValue();
+
+		else if (csParameterID == PAR_CX)
+			cx = m_cxPinPtr->GetValue();
+		else if (csParameterID == PAR_CY)
+			cy = m_cyPinPtr->GetValue();
+		else if (csParameterID == PAR_FX)
+			fx = m_fxPinPtr->GetValue();
+		else if (csParameterID == PAR_FY)
+			fy = m_fyPinPtr->GetValue();
+
+		else if(csParameterID == PAR_SIGMA)
+			det_parameters.sigma = m_sigmaPinPtr->GetValue();
+		else if(csParameterID == PAR_VALIDATION_BOUNDARY)
+			det_parameters.validation_boundary = m_validation_boundaryPinPtr->GetValue();
+		else if(csParameterID == PAR_WEIGHT_FACTOR)
+			det_parameters.weight_factor = m_weight_factorPinPtr->GetValue();
+
+		cx_undefined = cx == 0.0 || cy == 0.0;
+		fx_undefined = fx == 0.0 || fy == 0.0;
+
+	}
+		
+	
 }
