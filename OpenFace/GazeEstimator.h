@@ -110,6 +110,7 @@ private:
 	 *	PARAMETERS
 	 *
 	 */
+	Eyw::int_ptr m_model_locationPinPtr;
 
 	//bool ptrs
 	Eyw::bool_ptr m_limit_posePinPtr;
@@ -138,9 +139,12 @@ private:
 	Eyw::image_ptr m_inFrameImagePtr;
 	Eyw::vector3d_double_ptr m_outGazeEstimateLeftPtr;
 	Eyw::vector3d_double_ptr m_outGazeEstimateRightPtr;
+	Eyw::image_ptr m_outProcessedImagePtr;
 
 	//utility function
 	void PrepareCvImage(const Eyw::image_ptr& sourceImagePtr, cv::Mat& destinationImage);
+	void visualise_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy);
+
 
 	/*
 	 *
@@ -152,7 +156,7 @@ private:
 	const int gaze_draw_shiftbits = 4;
 	const int gaze_draw_multiplier = 1 << 4;
 
-	float fx, fy, cx, cy; //focal length e optical axis centre
+	double fx, fy, cx, cy; //focal length e optical axis centre
 
 	LandmarkDetector::CLNF clnf_model;
 	LandmarkDetector::FaceModelParameters det_parameters = LandmarkDetector::FaceModelParameters();

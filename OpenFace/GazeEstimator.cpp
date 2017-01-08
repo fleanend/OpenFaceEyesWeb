@@ -35,6 +35,8 @@ Eyw::block_class_registrant g_GazeEstimator(
 
 //////////////////////////////////////////////////////////
 // Identifiers
+#define PAR_MODEL_LOCATION "model_locationPin"
+
 #define PAR_LIMIT_POSE "limit_posePin" //bool
 #define PAR_REFINE_HIERARCHICAL "refine_hierarchicalPin" //bool
 #define PAR_REFINE_PARAMETERS "refine_parametersPin" //bool
@@ -54,6 +56,7 @@ Eyw::block_class_registrant g_GazeEstimator(
 #define IN_FRAMEIMAGE "Frame/Image"
 #define OUT_GAZEESTIMATELEFT "GazeEstimateLeft"
 #define OUT_GAZEESTIMATERIGHT "GazeEstimateRight"
+#define OUT_PROCESSEDIMAGE "ProcessedImage"
 
 
 //////////////////////////////////////////////////////////
@@ -67,6 +70,7 @@ CGazeEstimator::CGazeEstimator( const Eyw::OBJECT_CREATIONCTX* ctxPtr )
 	m_inFrameImagePtr=NULL;
 	m_outGazeEstimateLeftPtr=NULL;
 	m_outGazeEstimateRightPtr=NULL;
+	m_outProcessedImagePtr = NULL;
 
 	_schedulingInfoPtr->SetActivationEventBased( true );
 	_schedulingInfoPtr->GetEventBasedActivationInfo()->SetActivationOnInputChanged( IN_FRAMEIMAGE, true );
@@ -88,7 +92,27 @@ CGazeEstimator::~CGazeEstimator()
 /// </summary>
 //////////////////////////////////////////////////////////
 void CGazeEstimator::InitSignature()
-{	 
+{	
+	const char* model_location_description =
+		R"( "Location for the landmark detection model used by OpenFace: 
+	- "main_clnf_general" (default), trained on Multi-PIE of varying pose and illumination and In-the-wild data, works well for head pose tracking (CLNF model);
+	- "main_clnf_wild", trained on In-the-wild data, works better in noisy environments (not very well suited for head pose tracking), (CLNF in-the-wild model);
+	- "main_clm_general", a less accurate but slightly faster CLM model trained on Multi-PIE of varying pose and illumination and In-the-wild data, works well for head pose tracking;
+	- "main_clm-z", trained on Multi-PIE and BU-4DFE datasets, works with both intensity and depth signals (CLM-Z).)";
+
+	m_model_locationPinPtr = Eyw::Cast<Eyw::IInt*>(
+	                     SetParameter(Eyw::pin::id(PAR_MODEL_LOCATION)
+	                         .name("Model location")
+	                         .description(model_location_description)
+	                         .type<Eyw::IInt>()
+	                         .set_combo_layout(4) // change the number to the number of items
+	                             .item(0, "model/main_clnf_general.txt")
+	                             .item(1, "model/main_clnf_wild.txt")
+	                             .item(2, "model/main_clm_general.txt")
+								 .item(3, "model/main_clm-z.txt")
+	                         )->GetDatatype() );
+	m_model_locationPinPtr->SetValue(0);
+
 	m_limit_posePinPtr= Eyw::Cast<Eyw::IBool*>(
 						 SetParameter(Eyw::pin::id(PAR_LIMIT_POSE)
 							 .name("Limit Pose")
@@ -223,6 +247,12 @@ void CGazeEstimator::InitSignature()
 		.description("Vector estimating the right eye gaze direction")
 		.type<Eyw::IVector3DDouble>()
 		);
+	SetOutput(Eyw::pin::id(OUT_PROCESSEDIMAGE)
+		.name("Processed Image")
+		.description("Image processed showing the estimated gaze")
+		.type<Eyw::IImage>()
+		);
+	
 
 }
 
@@ -233,6 +263,8 @@ void CGazeEstimator::InitSignature()
 //////////////////////////////////////////////////////////
 void CGazeEstimator::CheckSignature()
 {
+	m_model_locationPinPtr = get_parameter_datatype<Eyw::IInt>(PAR_MODEL_LOCATION);
+
 	m_limit_posePinPtr=get_parameter_datatype<Eyw::IBool>(PAR_LIMIT_POSE);
 	m_refine_hierarchicalPinPtr=get_parameter_datatype<Eyw::IBool>(PAR_REFINE_HIERARCHICAL);
 	m_refine_parametersPinPtr=get_parameter_datatype<Eyw::IBool>(PAR_REFINE_PARAMETERS);
@@ -255,6 +287,7 @@ void CGazeEstimator::CheckSignature()
 	_signaturePtr->GetInputs()->FindItem( IN_FRAMEIMAGE );
 	_signaturePtr->GetOutputs()->FindItem( OUT_GAZEESTIMATELEFT );
 	_signaturePtr->GetOutputs()->FindItem( OUT_GAZEESTIMATERIGHT );
+	_signaturePtr->GetOutputs()->FindItem( OUT_PROCESSEDIMAGE );
 
 }
 
@@ -304,7 +337,10 @@ bool CGazeEstimator::Init() throw()
 		m_inFrameImagePtr = get_input_datatype<Eyw::IImage>( IN_FRAMEIMAGE );
 		m_outGazeEstimateLeftPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATELEFT );
 		m_outGazeEstimateRightPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATERIGHT );
+		m_outProcessedImagePtr = get_output_datatype<Eyw::IImage>( OUT_PROCESSEDIMAGE );
 		
+		det_parameters.model_location = GetComboParameterItem(PAR_MODEL_LOCATION, m_model_locationPinPtr->GetValue());
+
 		clnf_model = LandmarkDetector::CLNF(det_parameters.model_location);
 
 		det_parameters.track_gaze = true;
@@ -363,6 +399,7 @@ bool CGazeEstimator::Start() throw()
 		return false;
 	}
 }
+
 
 //////////////////////////////////////////////////////////
 /// <summary>
@@ -436,11 +473,15 @@ bool CGazeEstimator::Execute() throw()
 				FaceAnalysis::EstimateGaze(clnf_model, rightEyeVector, fx, fy, cx, cy, false);
 			}
 
+			visualise_tracking(captured_image, clnf_model, det_parameters, leftEyeVector, rightEyeVector, frame_count, fx, fy, cx, cy);
+
 			m_outGazeEstimateLeftPtr->SetValue(leftEyeVector.x, leftEyeVector.y, leftEyeVector.z );
 			m_outGazeEstimateRightPtr->SetValue(rightEyeVector.x, rightEyeVector.y, rightEyeVector.z);
+			//riempire 	m_outProcessedImagePtr
 
 			m_outGazeEstimateLeftPtr->SetCreationTime(_clockPtr->GetTime());
 			m_outGazeEstimateRightPtr->SetCreationTime(_clockPtr->GetTime());
+			m_outProcessedImagePtr->SetCreationTime(_clockPtr->GetTime());
 
 			Notify_DebugString("Completing execute()");
 
@@ -516,6 +557,7 @@ void CGazeEstimator::Done() throw()
 		m_inFrameImagePtr = NULL;
 		m_outGazeEstimateLeftPtr = NULL;
 		m_outGazeEstimateRightPtr = NULL;
+		m_outProcessedImagePtr = NULL;
 
 		Notify_DebugString("We are done\n");
 
@@ -579,4 +621,63 @@ void CGazeEstimator::OnChangedParameter( const std::string& csParameterID )
 	}
 		
 	
+}
+
+void CGazeEstimator::visualise_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy)
+{
+
+	// Drawing the facial landmarks on the face and the bounding box around it if tracking is successful and initialised
+	double detection_certainty = face_model.detection_certainty;
+	bool detection_success = face_model.detection_success;
+
+	double visualisation_boundary = 0.2;
+
+	// Only draw if the reliability is reasonable, the value is slightly ad-hoc
+	if (detection_certainty < visualisation_boundary)
+	{
+		LandmarkDetector::Draw(captured_image, face_model);
+
+		double vis_certainty = detection_certainty;
+		if (vis_certainty > 1)
+			vis_certainty = 1;
+		if (vis_certainty < -1)
+			vis_certainty = -1;
+
+		vis_certainty = (vis_certainty + 1) / (visualisation_boundary + 1);
+
+		// A rough heuristic for box around the face width
+		int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
+
+		cv::Vec6d pose_estimate_to_draw = LandmarkDetector::GetCorrectedPoseWorld(face_model, fx, fy, cx, cy);
+
+		// Draw it in reddish if uncertain, blueish if certain
+		//LandmarkDetector::DrawBox(captured_image, pose_estimate_to_draw, cv::Scalar((1 - vis_certainty)*255.0, 0, vis_certainty * 255), thickness, fx, fy, cx, cy);
+
+		if (det_parameters.track_gaze && detection_success && face_model.eye_model)
+		{
+			FaceAnalysis::DrawGaze(captured_image, face_model, gazeDirection0, gazeDirection1, fx, fy, cx, cy);
+		}
+	}
+
+	/*
+	// Work out the framerate
+	if (frame_count % 10 == 0)
+	{
+		double t1 = cv::getTickCount();
+		fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
+		t0 = t1;
+	}
+
+	// Write out the framerate on the image before displaying it
+	char fpsC[255];
+	std::sprintf(fpsC, "%d", (int)fps_tracker);
+	string fpsSt("FPS:");
+	fpsSt += fpsC;
+	cv::putText(captured_image, fpsSt, cv::Point(10, 20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255, 0, 0), 1, CV_AA);
+
+	if (!det_parameters.quiet_mode)
+	{
+		cv::namedWindow("tracking_result", 1);
+		cv::imshow("tracking_result", captured_image);
+	}*/
 }
