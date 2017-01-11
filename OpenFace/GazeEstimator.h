@@ -1,9 +1,10 @@
 #pragma once
 #include "StdAfx.h"
 #include "BaseCatalog/EywGeometricVector3D.h"
+#include "BaseCatalog/EywGeometricPoint2D.h"
 #include <opencv2/core/mat.hpp>
-#include "LandmarkDetectorParameters.h"
-#include "LandmarkDetectorModel.h"
+#include "./include/LandmarkDetectorParameters.h"
+#include "./include/LandmarkDetectorModel.h"
 
 
 class CGazeEstimator : public Eyw::CBlockImpl
@@ -141,8 +142,8 @@ private:
 	Eyw::vector3d_double_ptr m_outGazeEstimateLeftPtr;
 	Eyw::vector3d_double_ptr m_outGazeEstimateRightPtr;
 
-	Eyw::vector3d_int_ptr m_pupilLeftPtr;
-	Eyw::vector3d_int_ptr m_pupilRightPtr;
+	Eyw::point2d_int_ptr m_pupilLeftPtr;
+	Eyw::point2d_int_ptr m_pupilRightPtr;
 
 	Eyw::image_ptr m_outProcessedImagePtr;
 

@@ -257,13 +257,13 @@ void CGazeEstimator::InitSignature()
 		);
 	SetOutput(Eyw::pin::id(OUT_PUPILLEFT)
 		.name("Left pupil position")
-		.description("Vector estimating the right eye gaze direction")
-		.type<Eyw::IVector3DInt>()
+		.description("Left pupil estimated position")
+		.type<Eyw::IPoint2DInt>()
 		);
 	SetOutput(Eyw::pin::id(OUT_PUPILRIGHT)
 		.name("Right Pupil Position")
-		.description("Vector estimating the right eye gaze direction")
-		.type<Eyw::IVector3DInt>()
+		.description("Right pupil estimated position")
+		.type<Eyw::IPoint2DInt>()
 		);
 	
 
@@ -353,8 +353,8 @@ bool CGazeEstimator::Init() throw()
 		m_outGazeEstimateLeftPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATELEFT );
 		m_outGazeEstimateRightPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATERIGHT );
 		m_outProcessedImagePtr = get_output_datatype<Eyw::IImage>( OUT_PROCESSEDIMAGE );
-		m_pupilLeftPtr = get_output_datatype<Eyw::IVector3DInt>( OUT_PUPILLEFT );
-		m_pupilRightPtr = get_output_datatype<Eyw::IVector3DInt>( OUT_PUPILRIGHT );
+		m_pupilLeftPtr = get_output_datatype<Eyw::IPoint2DInt>( OUT_PUPILLEFT );
+		m_pupilRightPtr = get_output_datatype<Eyw::IPoint2DInt>( OUT_PUPILRIGHT );
 		
 		det_parameters.model_location = GetComboParameterItem(PAR_MODEL_LOCATION, m_model_locationPinPtr->GetValue());
 
@@ -749,8 +749,8 @@ void CGazeEstimator::fillPupilPosition()
 	cv::Point projectedPupilRight = cv::Point(cvRound(proj_points.at<double>(0, 0) /** (double)gaze_draw_multiplier*/), cvRound(proj_points.at<double>(0, 1) /** (double)gaze_draw_multiplier*/));
 
 
-	m_pupilLeftPtr->SetValue(projectedPupilLeft.x, projectedPupilLeft.y, 0);
-	m_pupilRightPtr->SetValue(projectedPupilRight.x, projectedPupilRight.y, 0);
+	m_pupilLeftPtr->SetValue(projectedPupilLeft.x, projectedPupilLeft.y);
+	m_pupilRightPtr->SetValue(projectedPupilRight.x, projectedPupilRight.y);
 	m_pupilLeftPtr->SetCreationTime(_clockPtr->GetTime());
 	m_pupilRightPtr->SetCreationTime(_clockPtr->GetTime());
 

@@ -15,7 +15,7 @@ Source for this block available at: [https://github.com/fleanend/OpenFaceEyesWeb
 ### Output
 
 - Estimated Gaze Vectors, type:**Vector 3D double**: 2 tridimensional vectors, thus not projected on the 2D surface of the frame/image, which represent the estimated vectors of the tracked person's gaze. Default value (displayed in case of tracking errors): $[0, 0, -1]$;
-- Estimated Pupils Position, type: **Vector 3D int**: 2 tridimensional vectors, with z coordinate equal to 0, which indicate the estimated position of the right and left pupils with respect to the input frame/image.
+- Estimated Pupils Position, type: **Point 2D int**: 2 bidimensional points which indicate the estimated position of the right and left pupils with respect to the input frame/image.
 - Frame/Image:
 
 ### Parameters
