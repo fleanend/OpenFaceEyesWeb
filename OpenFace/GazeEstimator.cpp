@@ -5,9 +5,10 @@
 #include "include/LandmarkDetectorModel.h"
 #include "include/GazeEstimation.h"
 #include <opencv2/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
 
 using namespace Eyw;
+
+cv::Point3f GetPupilPosition(cv::Mat_<double> eyeLdmks3d); 
 
 //////////////////////////////////////////////////////////
 /// <summary>
@@ -56,6 +57,8 @@ Eyw::block_class_registrant g_GazeEstimator(
 #define IN_FRAMEIMAGE "Frame/Image"
 #define OUT_GAZEESTIMATELEFT "GazeEstimateLeft"
 #define OUT_GAZEESTIMATERIGHT "GazeEstimateRight"
+#define OUT_PUPILLEFT "PupilLeft"
+#define OUT_PUPILRIGHT "PupiRight"
 #define OUT_PROCESSEDIMAGE "ProcessedImage"
 
 
@@ -252,6 +255,16 @@ void CGazeEstimator::InitSignature()
 		.description("Image processed showing the estimated gaze")
 		.type<Eyw::IImage>()
 		);
+	SetOutput(Eyw::pin::id(OUT_PUPILLEFT)
+		.name("Left pupil position")
+		.description("Vector estimating the right eye gaze direction")
+		.type<Eyw::IVector3DInt>()
+		);
+	SetOutput(Eyw::pin::id(OUT_PUPILRIGHT)
+		.name("Right Pupil Position")
+		.description("Vector estimating the right eye gaze direction")
+		.type<Eyw::IVector3DInt>()
+		);
 	
 
 }
@@ -288,6 +301,8 @@ void CGazeEstimator::CheckSignature()
 	_signaturePtr->GetOutputs()->FindItem( OUT_GAZEESTIMATELEFT );
 	_signaturePtr->GetOutputs()->FindItem( OUT_GAZEESTIMATERIGHT );
 	_signaturePtr->GetOutputs()->FindItem( OUT_PROCESSEDIMAGE );
+	_signaturePtr->GetOutputs()->FindItem( OUT_PUPILLEFT );
+	_signaturePtr->GetOutputs()->FindItem( OUT_PUPILRIGHT );
 
 }
 
@@ -338,6 +353,8 @@ bool CGazeEstimator::Init() throw()
 		m_outGazeEstimateLeftPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATELEFT );
 		m_outGazeEstimateRightPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATERIGHT );
 		m_outProcessedImagePtr = get_output_datatype<Eyw::IImage>( OUT_PROCESSEDIMAGE );
+		m_pupilLeftPtr = get_output_datatype<Eyw::IVector3DInt>( OUT_PUPILLEFT );
+		m_pupilRightPtr = get_output_datatype<Eyw::IVector3DInt>( OUT_PUPILRIGHT );
 		
 		det_parameters.model_location = GetComboParameterItem(PAR_MODEL_LOCATION, m_model_locationPinPtr->GetValue());
 
@@ -483,6 +500,8 @@ bool CGazeEstimator::Execute() throw()
 			m_outGazeEstimateRightPtr->SetCreationTime(_clockPtr->GetTime());
 			m_outProcessedImagePtr->SetCreationTime(_clockPtr->GetTime());
 
+			fillPupilPosition();
+
 			Notify_DebugString("Completing execute()");
 
 		}
@@ -558,6 +577,8 @@ void CGazeEstimator::Done() throw()
 		m_outGazeEstimateLeftPtr = NULL;
 		m_outGazeEstimateRightPtr = NULL;
 		m_outProcessedImagePtr = NULL;
+		m_pupilLeftPtr = NULL;
+		m_pupilRightPtr = NULL;
 
 		Notify_DebugString("We are done\n");
 
@@ -680,4 +701,58 @@ void CGazeEstimator::visualise_tracking(cv::Mat& captured_image, const LandmarkD
 		cv::namedWindow("tracking_result", 1);
 		cv::imshow("tracking_result", captured_image);
 	}*/
+}
+
+
+void CGazeEstimator::fillPupilPosition()
+{
+	int part_left = -1;
+	int part_right = -1;
+	for (size_t i = 0; i < clnf_model.hierarchical_models.size(); ++i)
+	{
+		if (clnf_model.hierarchical_model_names[i].compare("left_eye_28") == 0)
+		{
+			part_left = i;
+		}
+		if (clnf_model.hierarchical_model_names[i].compare("right_eye_28") == 0)
+		{
+			part_right = i;
+		}
+	}
+
+	//3D representation of pupil position
+	cv::Mat eyeLdmks3d_left = clnf_model.hierarchical_models[part_left].GetShape(fx, fy, cx, cy);
+	cv::Point3f pupil_left = GetPupilPosition(eyeLdmks3d_left);
+
+	cv::Mat eyeLdmks3d_right = clnf_model.hierarchical_models[part_right].GetShape(fx, fy, cx, cy);
+	cv::Point3f pupil_right = GetPupilPosition(eyeLdmks3d_right);
+
+
+	vector<cv::Point3d> points_left;
+	points_left.push_back(cv::Point3d(pupil_left));
+	points_left.push_back(cv::Point3d(pupil_left + leftEyeVector*50.0));
+
+	vector<cv::Point3d> points_right;
+	points_right.push_back(cv::Point3d(pupil_right));
+	points_right.push_back(cv::Point3d(pupil_right + rightEyeVector*50.0));
+
+	//Projection on a 2D image
+	cv::Mat_<double> proj_points;
+	cv::Mat_<double> left_mesh = (cv::Mat_<double>(2, 3) << points_left[0].x, points_left[0].y, points_left[0].z, points_left[1].x, points_left[1].y, points_left[1].z);
+	LandmarkDetector::Project(proj_points, left_mesh, fx, fy, cx, cy);
+
+	cv::Point projectedPupilLeft = cv::Point(cvRound(proj_points.at<double>(0, 0) /** (double)gaze_draw_multiplier*/), cvRound(proj_points.at<double>(0, 1) /** (double)gaze_draw_multiplier*/));
+
+	cv::Mat_<double> right_mesh = (cv::Mat_<double>(2, 3) << points_right[0].x, points_right[0].y, points_right[0].z, points_right[1].x, points_right[1].y, points_right[1].z);
+	LandmarkDetector::Project(proj_points, right_mesh, fx, fy, cx, cy);
+
+	cv::Point projectedPupilRight = cv::Point(cvRound(proj_points.at<double>(0, 0) /** (double)gaze_draw_multiplier*/), cvRound(proj_points.at<double>(0, 1) /** (double)gaze_draw_multiplier*/));
+
+
+	m_pupilLeftPtr->SetValue(projectedPupilLeft.x, projectedPupilLeft.y, 0);
+	m_pupilRightPtr->SetValue(projectedPupilRight.x, projectedPupilRight.y, 0);
+	m_pupilLeftPtr->SetCreationTime(_clockPtr->GetTime());
+	m_pupilRightPtr->SetCreationTime(_clockPtr->GetTime());
+
+
 }
