@@ -59,7 +59,8 @@ Eyw::block_class_registrant g_GazeEstimator(
 #define OUT_GAZEESTIMATERIGHT "GazeEstimateRight"
 #define OUT_PUPILLEFT "PupilLeft"
 #define OUT_PUPILRIGHT "PupiRight"
-#define OUT_PROCESSEDIMAGE "ProcessedImage"
+
+//#define OUT_PROCESSEDIMAGE "ProcessedImage"
 
 
 //////////////////////////////////////////////////////////
@@ -73,7 +74,9 @@ CGazeEstimator::CGazeEstimator( const Eyw::OBJECT_CREATIONCTX* ctxPtr )
 	m_inFrameImagePtr=NULL;
 	m_outGazeEstimateLeftPtr=NULL;
 	m_outGazeEstimateRightPtr=NULL;
-	m_outProcessedImagePtr = NULL;
+	m_pupilLeftPtr = NULL;
+	m_pupilRightPtr = NULL;
+	//m_outProcessedImagePtr = NULL;
 
 	_schedulingInfoPtr->SetActivationEventBased( true );
 	_schedulingInfoPtr->GetEventBasedActivationInfo()->SetActivationOnInputChanged( IN_FRAMEIMAGE, true );
@@ -250,11 +253,6 @@ void CGazeEstimator::InitSignature()
 		.description("Vector estimating the right eye gaze direction")
 		.type<Eyw::IVector3DDouble>()
 		);
-	SetOutput(Eyw::pin::id(OUT_PROCESSEDIMAGE)
-		.name("Processed Image")
-		.description("Image processed showing the estimated gaze")
-		.type<Eyw::IImage>()
-		);
 	SetOutput(Eyw::pin::id(OUT_PUPILLEFT)
 		.name("Left pupil position")
 		.description("Left pupil estimated position")
@@ -265,6 +263,16 @@ void CGazeEstimator::InitSignature()
 		.description("Right pupil estimated position")
 		.type<Eyw::IPoint2DInt>()
 		);
+
+	/*
+	 *	
+	 *	SetOutput(Eyw::pin::id(OUT_PROCESSEDIMAGE)
+		.name("Processed Image")
+		.description("Image processed showing the estimated gaze")
+		.type<Eyw::IImage>()
+		);
+	 *
+	 */
 	
 
 }
@@ -300,9 +308,11 @@ void CGazeEstimator::CheckSignature()
 	_signaturePtr->GetInputs()->FindItem( IN_FRAMEIMAGE );
 	_signaturePtr->GetOutputs()->FindItem( OUT_GAZEESTIMATELEFT );
 	_signaturePtr->GetOutputs()->FindItem( OUT_GAZEESTIMATERIGHT );
-	_signaturePtr->GetOutputs()->FindItem( OUT_PROCESSEDIMAGE );
 	_signaturePtr->GetOutputs()->FindItem( OUT_PUPILLEFT );
 	_signaturePtr->GetOutputs()->FindItem( OUT_PUPILRIGHT );
+
+	//_signaturePtr->GetOutputs()->FindItem( OUT_PROCESSEDIMAGE );
+
 
 }
 
@@ -347,14 +357,15 @@ bool CGazeEstimator::Init() throw()
 {
 	try
 	{
-		/// TODO: Init data structures here 
+		/// TODO: Init data structures here
 
 		m_inFrameImagePtr = get_input_datatype<Eyw::IImage>( IN_FRAMEIMAGE );
 		m_outGazeEstimateLeftPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATELEFT );
 		m_outGazeEstimateRightPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATERIGHT );
-		m_outProcessedImagePtr = get_output_datatype<Eyw::IImage>( OUT_PROCESSEDIMAGE );
 		m_pupilLeftPtr = get_output_datatype<Eyw::IPoint2DInt>( OUT_PUPILLEFT );
 		m_pupilRightPtr = get_output_datatype<Eyw::IPoint2DInt>( OUT_PUPILRIGHT );
+
+		// m_outProcessedImagePtr = get_output_datatype<Eyw::IImage>( OUT_PROCESSEDIMAGE );
 		
 		det_parameters.model_location = GetComboParameterItem(PAR_MODEL_LOCATION, m_model_locationPinPtr->GetValue());
 
@@ -498,7 +509,7 @@ bool CGazeEstimator::Execute() throw()
 
 			m_outGazeEstimateLeftPtr->SetCreationTime(_clockPtr->GetTime());
 			m_outGazeEstimateRightPtr->SetCreationTime(_clockPtr->GetTime());
-			m_outProcessedImagePtr->SetCreationTime(_clockPtr->GetTime());
+			//m_outProcessedImagePtr->SetCreationTime(_clockPtr->GetTime());
 
 			fillPupilPosition();
 
@@ -576,9 +587,10 @@ void CGazeEstimator::Done() throw()
 		m_inFrameImagePtr = NULL;
 		m_outGazeEstimateLeftPtr = NULL;
 		m_outGazeEstimateRightPtr = NULL;
-		m_outProcessedImagePtr = NULL;
 		m_pupilLeftPtr = NULL;
 		m_pupilRightPtr = NULL;
+
+		// m_outProcessedImagePtr = NULL;
 
 		Notify_DebugString("We are done\n");
 

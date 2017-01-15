@@ -1,10 +1,12 @@
-# OpenFace Gaze Estimator EyesWeb Block
+# OpenFace GazeEstimator EyesWeb Block
 
-Developed by [Federico D'Ambrosio](https://github.com/fedexist)
+Developed by [Federico D'Ambrosio](https://github.com/fedexist), based on [OpenFace](https://github.com/TadasBaltrusaitis/OpenFace) - [Wiki](https://github.com/TadasBaltrusaitis/OpenFace/wiki).
 
-OpenFace: [https://github.com/TadasBaltrusaitis/OpenFace](https://github.com/TadasBaltrusaitis/OpenFace)
+Source for this block available at: [https://github.com/fleanend/OpenFaceEyesWeb](https://github.com/fleanend/OpenFaceEyesWeb).
 
-Source for this block available at: [https://github.com/fleanend/OpenFaceEyesWeb](https://github.com/fleanend/OpenFaceEyesWeb)
+EyesWeb Platform: [http://www.infomus.org/eyesweb_ita.php](http://www.infomus.org/eyesweb_ita.php).
+
+OpenFace GazeEstimator is an EyewWeb Block based on the gaze tracking capabilities of face tracking software **OpenFace**, mainly developed by [Tadas Baltrusaitis](https://www.cl.cam.ac.uk/research/rainbow/projects/openface/). 
 
 ## Specifications
 
@@ -14,9 +16,8 @@ Source for this block available at: [https://github.com/fleanend/OpenFaceEyesWeb
 
 ### Output
 
-- Estimated Gaze Vectors, type:**Vector 3D double**: 2 tridimensional vectors, thus not projected on the 2D surface of the frame/image, which represent the estimated vectors of the tracked person's gaze. Default value (displayed in case of tracking errors): $[0, 0, -1]$;
-- Estimated Pupils Position, type: **Point 2D int**: 2 bidimensional points which indicate the estimated position of the right and left pupils with respect to the input frame/image.
-- Frame/Image:
+- **Estimated Gaze Vectors**, type:**Vector 3D double**: 2 tridimensional vectors, thus not projected on the 2D surface of the frame/image, which represent the estimated vectors of the tracked person's gaze. Default value (displayed in case of tracking errors): $[0, 0, -1]$;
+- **Estimated Pupils Position**, type: **Point 2D int**: 2 bidimensional points which indicate the estimated position of the right and left pupils with respect to the input frame/image.
 
 ### Parameters
 

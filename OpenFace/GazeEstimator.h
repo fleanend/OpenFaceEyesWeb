@@ -145,7 +145,7 @@ private:
 	Eyw::point2d_int_ptr m_pupilLeftPtr;
 	Eyw::point2d_int_ptr m_pupilRightPtr;
 
-	Eyw::image_ptr m_outProcessedImagePtr;
+	//Eyw::image_ptr m_outProcessedImagePtr;
 
 	//utility function
 	void PrepareCvImage(const Eyw::image_ptr& sourceImagePtr, cv::Mat& destinationImage);
