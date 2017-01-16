@@ -501,7 +501,6 @@ bool CGazeEstimator::Execute() throw()
 				FaceAnalysis::EstimateGaze(clnf_model, rightEyeVector, fx, fy, cx, cy, false);
 			}
 
-			visualise_tracking(captured_image, clnf_model, det_parameters, leftEyeVector, rightEyeVector, frame_count, fx, fy, cx, cy);
 
 			m_outGazeEstimateLeftPtr->SetValue(leftEyeVector.x, leftEyeVector.y, leftEyeVector.z );
 			m_outGazeEstimateRightPtr->SetValue(rightEyeVector.x, rightEyeVector.y, rightEyeVector.z);
