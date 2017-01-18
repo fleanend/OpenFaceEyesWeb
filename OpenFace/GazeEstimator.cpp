@@ -18,7 +18,7 @@ Eyw::block_class_registrant g_GazeEstimator(
 	Eyw::block_class_registrant::block_id( "GazeEstimator" )
 		.begin_language( EYW_LANGUAGE_US_ENGLISH )
 			.name( "GazeEstimator" )
-			.description( "This Block retrieves 2 vectors corresponding to the gaze of a single person inside an image or videoframe."	)
+			.description( "This Block retrieves 2 vectors corresponding to the gaze of a single person inside an image or videoframe and the position of the pupils inside the image."	)
 			.libraries( "MyLibrary" )
 			.bitmap( IDB_GAZEESTIMATOR_BITMAP )
 		.end_language()	
@@ -256,12 +256,12 @@ void CGazeEstimator::InitSignature()
 	SetOutput(Eyw::pin::id(OUT_PUPILLEFT)
 		.name("Left pupil position")
 		.description("Left pupil estimated position")
-		.type<Eyw::IPoint2DInt>()
+		.type<Eyw::IGraphicPoint2DInt>()
 		);
 	SetOutput(Eyw::pin::id(OUT_PUPILRIGHT)
 		.name("Right Pupil Position")
 		.description("Right pupil estimated position")
-		.type<Eyw::IPoint2DInt>()
+		.type<Eyw::IGraphicPoint2DInt>()
 		);
 
 	/*
@@ -362,8 +362,8 @@ bool CGazeEstimator::Init() throw()
 		m_inFrameImagePtr = get_input_datatype<Eyw::IImage>( IN_FRAMEIMAGE );
 		m_outGazeEstimateLeftPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATELEFT );
 		m_outGazeEstimateRightPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATERIGHT );
-		m_pupilLeftPtr = get_output_datatype<Eyw::IPoint2DInt>( OUT_PUPILLEFT );
-		m_pupilRightPtr = get_output_datatype<Eyw::IPoint2DInt>( OUT_PUPILRIGHT );
+		m_pupilLeftPtr = get_output_datatype<Eyw::IGraphicPoint2DInt>( OUT_PUPILLEFT );
+		m_pupilRightPtr = get_output_datatype<Eyw::IGraphicPoint2DInt>( OUT_PUPILRIGHT );
 
 		// m_outProcessedImagePtr = get_output_datatype<Eyw::IImage>( OUT_PROCESSEDIMAGE );
 		
