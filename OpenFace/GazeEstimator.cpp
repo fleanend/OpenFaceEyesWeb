@@ -59,6 +59,8 @@ Eyw::block_class_registrant g_GazeEstimator(
 #define OUT_GAZEESTIMATERIGHT "GazeEstimateRight"
 #define OUT_PUPILLEFT "PupilLeft"
 #define OUT_PUPILRIGHT "PupiRight"
+#define OUT_LINELEFT "LeftGazeLine"
+#define OUT_LINERIGHT "RightGazeLine"
 
 //#define OUT_PROCESSEDIMAGE "ProcessedImage"
 
@@ -76,7 +78,8 @@ CGazeEstimator::CGazeEstimator( const Eyw::OBJECT_CREATIONCTX* ctxPtr )
 	m_outGazeEstimateRightPtr=NULL;
 	m_pupilLeftPtr = NULL;
 	m_pupilRightPtr = NULL;
-	//m_outProcessedImagePtr = NULL;
+	m_outLeftline = NULL;
+	m_outRightline = NULL;
 
 	_schedulingInfoPtr->SetActivationEventBased( true );
 	_schedulingInfoPtr->GetEventBasedActivationInfo()->SetActivationOnInputChanged( IN_FRAMEIMAGE, true );
@@ -263,16 +266,16 @@ void CGazeEstimator::InitSignature()
 		.description("Right pupil estimated position")
 		.type<Eyw::IGraphicPoint2DInt>()
 		);
-
-	/*
-	 *	
-	 *	SetOutput(Eyw::pin::id(OUT_PROCESSEDIMAGE)
-		.name("Processed Image")
-		.description("Image processed showing the estimated gaze")
-		.type<Eyw::IImage>()
+	SetOutput(Eyw::pin::id(OUT_LINELEFT)
+		.name("Left gaze Line")
+		.description("2D representation of the left gaze")
+		.type<Eyw::IGraphicLine2DInt>()
 		);
-	 *
-	 */
+	SetOutput(Eyw::pin::id(OUT_LINERIGHT)
+		.name("Right gaze Line")
+		.description("2D representation of the right gaze")
+		.type<Eyw::IGraphicLine2DInt>()
+		);
 	
 
 }
@@ -310,6 +313,8 @@ void CGazeEstimator::CheckSignature()
 	_signaturePtr->GetOutputs()->FindItem( OUT_GAZEESTIMATERIGHT );
 	_signaturePtr->GetOutputs()->FindItem( OUT_PUPILLEFT );
 	_signaturePtr->GetOutputs()->FindItem( OUT_PUPILRIGHT );
+	_signaturePtr->GetOutputs()->FindItem( OUT_LINELEFT );
+	_signaturePtr->GetOutputs()->FindItem( OUT_LINERIGHT );
 
 	//_signaturePtr->GetOutputs()->FindItem( OUT_PROCESSEDIMAGE );
 
@@ -364,6 +369,8 @@ bool CGazeEstimator::Init() throw()
 		m_outGazeEstimateRightPtr = get_output_datatype<Eyw::IVector3DDouble>( OUT_GAZEESTIMATERIGHT );
 		m_pupilLeftPtr = get_output_datatype<Eyw::IGraphicPoint2DInt>( OUT_PUPILLEFT );
 		m_pupilRightPtr = get_output_datatype<Eyw::IGraphicPoint2DInt>( OUT_PUPILRIGHT );
+		m_outLeftline = get_output_datatype<Eyw::IGraphicLine2DInt>(OUT_LINELEFT);
+		m_outRightline = get_output_datatype<Eyw::IGraphicLine2DInt>(OUT_LINERIGHT);
 
 		// m_outProcessedImagePtr = get_output_datatype<Eyw::IImage>( OUT_PROCESSEDIMAGE );
 		
@@ -471,7 +478,6 @@ bool CGazeEstimator::Execute() throw()
 			fy = m_fyPinPtr->GetValue();
 
 		}
-
 
 		if(!captured_image.empty())
 		{
@@ -588,8 +594,8 @@ void CGazeEstimator::Done() throw()
 		m_outGazeEstimateRightPtr = NULL;
 		m_pupilLeftPtr = NULL;
 		m_pupilRightPtr = NULL;
-
-		// m_outProcessedImagePtr = NULL;
+		m_outLeftline = NULL;
+		m_outRightline = NULL;
 
 		Notify_DebugString("We are done\n");
 
@@ -655,65 +661,6 @@ void CGazeEstimator::OnChangedParameter( const std::string& csParameterID )
 	
 }
 
-void CGazeEstimator::visualise_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy)
-{
-
-	// Drawing the facial landmarks on the face and the bounding box around it if tracking is successful and initialised
-	double detection_certainty = face_model.detection_certainty;
-	bool detection_success = face_model.detection_success;
-
-	double visualisation_boundary = 0.2;
-
-	// Only draw if the reliability is reasonable, the value is slightly ad-hoc
-	if (detection_certainty < visualisation_boundary)
-	{
-		LandmarkDetector::Draw(captured_image, face_model);
-
-		double vis_certainty = detection_certainty;
-		if (vis_certainty > 1)
-			vis_certainty = 1;
-		if (vis_certainty < -1)
-			vis_certainty = -1;
-
-		vis_certainty = (vis_certainty + 1) / (visualisation_boundary + 1);
-
-		// A rough heuristic for box around the face width
-		int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
-
-		cv::Vec6d pose_estimate_to_draw = LandmarkDetector::GetCorrectedPoseWorld(face_model, fx, fy, cx, cy);
-
-		// Draw it in reddish if uncertain, blueish if certain
-		//LandmarkDetector::DrawBox(captured_image, pose_estimate_to_draw, cv::Scalar((1 - vis_certainty)*255.0, 0, vis_certainty * 255), thickness, fx, fy, cx, cy);
-
-		if (det_parameters.track_gaze && detection_success && face_model.eye_model)
-		{
-			FaceAnalysis::DrawGaze(captured_image, face_model, gazeDirection0, gazeDirection1, fx, fy, cx, cy);
-		}
-	}
-
-	/*
-	// Work out the framerate
-	if (frame_count % 10 == 0)
-	{
-		double t1 = cv::getTickCount();
-		fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
-		t0 = t1;
-	}
-
-	// Write out the framerate on the image before displaying it
-	char fpsC[255];
-	std::sprintf(fpsC, "%d", (int)fps_tracker);
-	string fpsSt("FPS:");
-	fpsSt += fpsC;
-	cv::putText(captured_image, fpsSt, cv::Point(10, 20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255, 0, 0), 1, CV_AA);
-
-	if (!det_parameters.quiet_mode)
-	{
-		cv::namedWindow("tracking_result", 1);
-		cv::imshow("tracking_result", captured_image);
-	}*/
-}
-
 
 void CGazeEstimator::fillPupilPosition()
 {
@@ -747,23 +694,40 @@ void CGazeEstimator::fillPupilPosition()
 	points_right.push_back(cv::Point3d(pupil_right));
 	points_right.push_back(cv::Point3d(pupil_right + rightEyeVector*50.0));
 
-	//Projection on a 2D image
+	//Projection on a 2D image, Left
 	cv::Mat_<double> proj_points;
 	cv::Mat_<double> left_mesh = (cv::Mat_<double>(2, 3) << points_left[0].x, points_left[0].y, points_left[0].z, points_left[1].x, points_left[1].y, points_left[1].z);
 	LandmarkDetector::Project(proj_points, left_mesh, fx, fy, cx, cy);
 
-	cv::Point projectedPupilLeft = cv::Point(cvRound(proj_points.at<double>(0, 0) /** (double)gaze_draw_multiplier*/), cvRound(proj_points.at<double>(0, 1) /** (double)gaze_draw_multiplier*/));
+	cv::Point projectedPupilLeft = cv::Point(cvRound(proj_points.at<double>(0, 0) ), cvRound(proj_points.at<double>(0, 1) /** (double)gaze_draw_multiplier*/));
+	cv::Point gazeLeftEndPoint = cv::Point(cvRound(proj_points.at<double>(1, 0)), cvRound(proj_points.at<double>(1, 1)));
 
+	//Projection on a 2D image, Right
 	cv::Mat_<double> right_mesh = (cv::Mat_<double>(2, 3) << points_right[0].x, points_right[0].y, points_right[0].z, points_right[1].x, points_right[1].y, points_right[1].z);
 	LandmarkDetector::Project(proj_points, right_mesh, fx, fy, cx, cy);
 
 	cv::Point projectedPupilRight = cv::Point(cvRound(proj_points.at<double>(0, 0) /** (double)gaze_draw_multiplier*/), cvRound(proj_points.at<double>(0, 1) /** (double)gaze_draw_multiplier*/));
+	cv::Point gazeRightEndPoint = cv::Point(cvRound(proj_points.at<double>(1, 0)), cvRound(proj_points.at<double>(1, 1)));
 
-
+	//setting pupils position
 	m_pupilLeftPtr->SetValue(projectedPupilLeft.x, projectedPupilLeft.y);
 	m_pupilRightPtr->SetValue(projectedPupilRight.x, projectedPupilRight.y);
+
+
+	
+	Eyw::point2d_int_ptr gazeLeft = Eyw::datatype<IPoint2DInt>::create(_kernelServicesPtr);
+	Eyw::point2d_int_ptr gazeRight = Eyw::datatype<IPoint2DInt>::create(_kernelServicesPtr); ;
+	gazeLeft->SetValue(gazeLeftEndPoint.x, gazeLeftEndPoint.y);
+	gazeRight->SetValue(gazeRightEndPoint.x, gazeRightEndPoint.y);
+
+	m_outLeftline->SetValue(m_pupilLeftPtr->GetValue(), gazeLeft->GetValue());
+	m_outRightline->SetValue(m_pupilRightPtr->GetValue(), gazeRight->GetValue());
+
 	m_pupilLeftPtr->SetCreationTime(_clockPtr->GetTime());
 	m_pupilRightPtr->SetCreationTime(_clockPtr->GetTime());
+
+	m_outLeftline->SetCreationTime(_clockPtr->GetTime());
+	m_outRightline->SetCreationTime(_clockPtr->GetTime());
 
 
 }
