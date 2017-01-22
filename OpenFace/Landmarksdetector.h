@@ -1,14 +1,14 @@
 #pragma once
+
 #include "StdAfx.h"
 #include "BaseCatalog/EywGeometricVector3D.h"
 #include "BaseCatalog/EywGeometricPoint2D.h"
-#include "BaseCatalog/EywGraphicPoint2D.h"
 #include <opencv2/core/mat.hpp>
 #include "./include/LandmarkDetectorParameters.h"
 #include "./include/LandmarkDetectorModel.h"
-#include "BaseCatalog/EywGraphicLine2D.h"
+#include "BaseCatalog/EywGraphicPoint2D.h"
 
-class CGazeEstimator : public Eyw::CBlockImpl
+class CLandmarksdetector : public Eyw::CBlockImpl
 {
 public:
 	//////////////////////////////////////////////////////////
@@ -16,14 +16,14 @@ public:
 	/// Constructor.
 	/// </summary>
 	//////////////////////////////////////////////////////////
-	CGazeEstimator( const Eyw::OBJECT_CREATIONCTX* ctxPtr );
+	CLandmarksdetector( const Eyw::OBJECT_CREATIONCTX* ctxPtr );
 	
 	//////////////////////////////////////////////////////////
 	/// <summary>	
 	/// Destructor.
 	/// </summary>
 	//////////////////////////////////////////////////////////
-	~CGazeEstimator();
+	~CLandmarksdetector();
 
 protected:
 
@@ -78,8 +78,6 @@ protected:
 	/// </returns>
 	//////////////////////////////////////////////////////////
 	virtual bool Execute() throw();
-	
-
 
 	//////////////////////////////////////////////////////////
 	/// <summary>
@@ -138,24 +136,17 @@ private:
 	 *	INPUTS AND OUTPUTS
 	 *
 	 */
+
+	Eyw::graphic_point2d_double_ptr m_pointPtr;
+
 	Eyw::image_ptr m_inFrameImagePtr;
 
-	Eyw::vector3d_double_ptr m_outGazeEstimateLeftPtr;
-	Eyw::vector3d_double_ptr m_outGazeEstimateRightPtr;
+	Eyw::list_ptr m_outLandmarksPtr;
 
-	Eyw::graphic_point2d_int_ptr m_pupilLeftPtr;
-	Eyw::graphic_point2d_int_ptr m_pupilRightPtr;
-
-	Eyw::graphic_line2d_int_ptr m_outLeftline;
-	Eyw::graphic_line2d_int_ptr m_outRightline;
-
-	Eyw::POINT_2D point;
-
-	//Eyw::image_ptr m_outProcessedImagePtr;
 
 	//utility function
 	void PrepareCvImage(const Eyw::image_ptr& sourceImagePtr, cv::Mat& destinationImage);
-	void fillPupilPosition();
+	void visualise_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy);
 
 	/*
 	 *
@@ -163,23 +154,16 @@ private:
 	 *
 	 */
 
-	// For subpixel accuracy drawing
-	const int gaze_draw_shiftbits = 4;
-	const int gaze_draw_multiplier = 1 << 4;
-
 	double fx, fy, cx, cy; //focal length e optical axis centre
 
 	LandmarkDetector::CLNF clnf_model;
 	LandmarkDetector::FaceModelParameters det_parameters = LandmarkDetector::FaceModelParameters();
 
-	cv::Point3f leftEyeVector; 
-	cv::Point3f rightEyeVector;
-
+	cv::Mat landmarks;
 	cv::Mat captured_image;
 
 	int frame_count = 0;
 
 	bool cx_undefined = false;
 	bool fx_undefined = false;
-
 };

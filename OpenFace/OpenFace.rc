@@ -7,7 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "winres.h"
+#include "afxres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -90,7 +90,6 @@ END
 //
 
 IDB_OPENFACE_CATALOG    BITMAP                  "res\\OpenFace.bmp"
-
 #endif    // Inglese (Stati Uniti) resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -107,8 +106,8 @@ LANGUAGE LANG_ITALIAN, SUBLANG_ITALIAN
 // Bitmap
 //
 
-IDB_GAZEESTIMATOR_BITMAP    BITMAP                  "res\\GazeEstimator.bmp"
-
+IDB_GAZEESTIMATOR_BITMAP BITMAP                  "res\\GazeEstimator.bmp"
+IDB_LANDMARKSDETECTOR_BITMAP BITMAP                  "res\\Landmarksdetector.bmp"
 #endif    // Italiano (Italia) resources
 /////////////////////////////////////////////////////////////////////////////
 
