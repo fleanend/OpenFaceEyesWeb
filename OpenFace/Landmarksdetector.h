@@ -144,6 +144,8 @@ private:
 
 	Eyw::graphic_labelled_set_2d_double_ptr m_outLandmarksPtr;
 
+	Eyw::graphic_labelled_set_2d_double_ptr m_outLandmarksEyePtr;
+
 
 	//utility function
 	void PrepareCvImage(const Eyw::image_ptr& sourceImagePtr, cv::Mat& destinationImage);
@@ -165,6 +167,10 @@ private:
 
 	cv::Mat landmarks;
 	cv::Mat captured_image;
+
+	int labelCount = 0;
+	
+	int labelCount_2 = 0;
 
 	int frame_count = 0;
 

@@ -55,6 +55,7 @@ Eyw::block_class_registrant g_Landmarksdetector(
 
 #define IN_FRAMEIMAGE "Frame/Image"
 #define OUT_LANDMARKS "Landmarks"
+#define OUT_LANDMARKS_EYE "Eye Landmarks"
 
 //////////////////////////////////////////////////////////
 /// <summary>
@@ -66,6 +67,7 @@ CLandmarksdetector::CLandmarksdetector( const Eyw::OBJECT_CREATIONCTX* ctxPtr )
 {
 	m_inFrameImagePtr=NULL;
 	m_outLandmarksPtr = NULL;
+	m_outLandmarksEyePtr = NULL;
 	_schedulingInfoPtr->SetActivationEventBased( true );
 	_schedulingInfoPtr->GetEventBasedActivationInfo()->SetActivationOnInputChanged( IN_FRAMEIMAGE, true );
 }
@@ -237,6 +239,12 @@ void CLandmarksdetector::InitSignature()
 		.type < Eyw::IGraphicLabelledSet2DDouble > ()
 		);
 
+	SetOutput(Eyw::pin::id(OUT_LANDMARKS_EYE)
+		.name("Eye Landmarks' position")
+		.description("Labelled set of 2D points of the landmarks of the eyes")
+		.type < Eyw::IGraphicLabelledSet2DDouble > ()
+		);
+
 }
 
 //////////////////////////////////////////////////////////
@@ -269,6 +277,7 @@ void CLandmarksdetector::CheckSignature()
 
 	_signaturePtr->GetInputs()->FindItem( IN_FRAMEIMAGE );
 	_signaturePtr->GetOutputs()->FindItem( OUT_LANDMARKS );
+	_signaturePtr->GetOutputs()->FindItem( OUT_LANDMARKS_EYE );
 }
 
 //////////////////////////////////////////////////////////
@@ -322,6 +331,14 @@ bool CLandmarksdetector::Init() throw()
 			listInitInfoPtr->SetClassID(EYW_BASE_CATALOG_GRAPHIC_POINT2D_DOUBLE_ID);
 			
 			m_outLandmarksPtr->InitInstance(listInitInfoPtr.get());
+
+		m_outLandmarksEyePtr = get_output_datatype<Eyw::IGraphicLabelledSet2DDouble>(OUT_LANDMARKS_EYE);
+
+			list_init_info_ptr listInitInfoPtr2 = datatype_init_info<IListInitInfo>::create(_kernelServicesPtr);
+			listInitInfoPtr2->SetCatalogID(EYW_BASE_CATALOG_ID);
+			listInitInfoPtr2->SetClassID(EYW_BASE_CATALOG_GRAPHIC_POINT2D_DOUBLE_ID);
+			
+			m_outLandmarksEyePtr->InitInstance(listInitInfoPtr2.get());
 
 			m_pointPtr = datatype<Eyw::IGraphicPoint2DDouble>::create(_kernelServicesPtr);
 		//m_outLandmarksPtr = get_output_datatype<Eyw::IGraphicPoint2DDouble>( OUT_LANDMARKS );
@@ -411,6 +428,10 @@ bool CLandmarksdetector::Execute() throw()
 		int cols = m_inFrameImagePtr->GetWidth();
 
 		m_outLandmarksPtr->Clear();
+		m_outLandmarksEyePtr->Clear();
+
+		labelCount = 0;
+		labelCount_2 = 0;
 
 		cv::Mat output_image;
 
@@ -494,6 +515,7 @@ bool CLandmarksdetector::Execute() throw()
 			//Notify_DebugString(str);*/
 			
 			m_outLandmarksPtr->SetCreationTime(_clockPtr->GetTime());
+			m_outLandmarksEyePtr->SetCreationTime(_clockPtr->GetTime());
 			return true;
 			Notify_DebugString("Completing execute()");
 		}
@@ -571,6 +593,7 @@ void CLandmarksdetector::Done() throw()
 	{
 		m_inFrameImagePtr = NULL;
 		m_outLandmarksPtr = NULL;
+		m_outLandmarksEyePtr = NULL;
 		m_pointPtr = 0;
 		Notify_DebugString("We are done\n");
 
@@ -655,22 +678,52 @@ void CLandmarksdetector::DrawLandmark(const LandmarkDetector::CLNF& clnf_model)
 void CLandmarksdetector::DrawLandmark(const cv::Mat_<double>& shape2D,const cv::Mat_<int> &visibilities)
 {
 	int n = shape2D.rows/2;
+
 	std::string str = "";
-	for (int i = 0; i < n; ++i)
+
+	if(n != 28)
 	{
-		if (i < 10)
-		{
-			str = "Landmark_0" + i;
-		}
-		else
-		{
-			str = "Landmark_" + i;
-		}
-		if (visibilities.at<int>(i))
-		{
-			m_pointPtr->SetValue(shape2D.at<double>(i)/normFacX,shape2D.at<double>(i + n)/normFacY);
+		for( int i = 0; i < n; ++i)
+		{		
+			if(visibilities.at<int>(i))
+			{
+				labelCount++;
+
+				if (labelCount < 10)
+				{
+					str = "Landmark_0" + labelCount;
+				}
+				else
+				{
+					str = "Landmark_" + labelCount;
+				}
+
+				m_pointPtr->SetValue(cvRound(shape2D.at<double>(i)*16)/(normFacX*16),cvRound(shape2D.at<double>(i + n)*16)/(normFacY*16));
 			
-			m_outLandmarksPtr->Insert(str.c_str(), m_pointPtr.get());
+				m_outLandmarksPtr->Insert(str.c_str(), m_pointPtr.get());
+
+			}
 		}
 	}
+	else if(n == 28) // drawing eyes
+	{
+		for( int i = 0; i < n; ++i)
+		{		
+			labelCount_2++;
+
+				if (labelCount_2 < 10)
+				{
+					str = "Eye_0" + labelCount_2;
+				}
+				else
+				{
+					str = "Eye_" + labelCount_2;
+				}
+
+				m_pointPtr->SetValue(cvRound(shape2D.at<double>(i)*16)/(normFacX*16),cvRound(shape2D.at<double>(i + n)*16)/(normFacY*16));
+			
+				m_outLandmarksEyePtr->Insert(str.c_str(), m_pointPtr.get());
+
+		}
+	}	
 }
