@@ -233,8 +233,8 @@ void CLandmarksdetector::InitSignature()
 	
 	SetOutput(Eyw::pin::id(OUT_LANDMARKS)
 		.name("Landmarks' position")
-		.description("Vector of 2D points of the landmarks")
-		.type < Eyw::IList > ()
+		.description("Labelled set of 2D points of the landmarks")
+		.type < Eyw::IGraphicLabelledSet2DDouble > ()
 		);
 
 }
@@ -315,7 +315,7 @@ bool CLandmarksdetector::Init() throw()
 		/// TODO: Init data structures here 
 		m_inFrameImagePtr = get_input_datatype<Eyw::IImage>( IN_FRAMEIMAGE );
 		
-		m_outLandmarksPtr = get_output_datatype<IList>(OUT_LANDMARKS);
+		m_outLandmarksPtr = get_output_datatype<Eyw::IGraphicLabelledSet2DDouble>(OUT_LANDMARKS);
 
 			list_init_info_ptr listInitInfoPtr = datatype_init_info<IListInitInfo>::create(_kernelServicesPtr);
 			listInitInfoPtr->SetCatalogID(EYW_BASE_CATALOG_ID);
@@ -459,28 +459,39 @@ bool CLandmarksdetector::Execute() throw()
 				grayscale_image = captured_image.clone();				
 			}
 
-			Notify_DebugString("Part 1\n");
+			//Notify_DebugString("Part 1\n");
 
 			
 
 			bool detection_success = DetectLandmarksInVideo(grayscale_image, clnf_model, det_parameters);
 			double detection_certainty = clnf_model.detection_certainty;
 
-			landmarks = cv::Mat();
+			double threshold = 0.2;
+
+			if (detection_certainty < threshold)
+				DrawLandmark(clnf_model);
+
+			/*landmarks = cv::Mat();
 
 			landmarks = clnf_model.detected_landmarks;
 
 			int mid = landmarks.rows / 2;
-			
-			
+
 			for (int i = 0; i < mid;i++)
 			{
-						
+				if (i < 10)
+				{
+					str = "Landmark_0" + i;
+				}
+				else
+				{
+					str = "Landmark_" + i;
+				}
 				m_pointPtr->SetValue(landmarks.at<double>(i, 0)/cols,landmarks.at<double>(mid+i,0 )/rows);
-				m_outLandmarksPtr->PushBack(m_pointPtr.get());
+				m_outLandmarksPtr->Insert(str.c_str(), m_pointPtr.get());
 			}
 
-			//Notify_DebugString(str);
+			//Notify_DebugString(str);*/
 			
 			m_outLandmarksPtr->SetCreationTime(_clockPtr->GetTime());
 			return true;
@@ -516,6 +527,8 @@ void CLandmarksdetector::PrepareCvImage(const image_ptr& sourceImagePtr, cv::Mat
 			int width, height, step;
 			width = sourceImagePtr->GetWidth();
 			height = sourceImagePtr->GetHeight();
+			normFacX = width;
+			normFacY = height;
 			step = sourceImagePtr->GetStepSize();
 			if (sourceImagePtr->GetColorModel() == Eyw::ecmBW)
 				destinationImage = *(new cv::Mat(height, width, CV_8UC1, sourceImagePtr->GetBuffer(), step));
@@ -620,61 +633,44 @@ void CLandmarksdetector::OnChangedParameter( const std::string& csParameterID )
 	}
 }
 
-void CLandmarksdetector::visualise_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy)
+// Drawing detected landmarks on a face image
+void CLandmarksdetector::DrawLandmark(const LandmarkDetector::CLNF& clnf_model)
 {
 
-	// Drawing the facial landmarks on the face and the bounding box around it if tracking is successful and initialised
-	double detection_certainty = face_model.detection_certainty;
-	bool detection_success = face_model.detection_success;
+	int idx = clnf_model.patch_experts.GetViewIdx(clnf_model.params_global, 0);
 
-	double visualisation_boundary = 0.2;
+	// Because we only draw visible points, need to find which points patch experts consider visible at a certain orientation
+	DrawLandmark(clnf_model.detected_landmarks, clnf_model.patch_experts.visibilities[0][idx]);
 
-	// Only draw if the reliability is reasonable, the value is slightly ad-hoc
-	if (detection_certainty < visualisation_boundary)
+	// If the model has hierarchical updates draw those too
+	for(size_t i = 0; i < clnf_model.hierarchical_models.size(); ++i)
 	{
-		LandmarkDetector::Draw(captured_image, face_model);
-
-		double vis_certainty = detection_certainty;
-		if (vis_certainty > 1)
-			vis_certainty = 1;
-		if (vis_certainty < -1)
-			vis_certainty = -1;
-
-		vis_certainty = (vis_certainty + 1) / (visualisation_boundary + 1);
-
-		// A rough heuristic for box around the face width
-		int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
-
-		cv::Vec6d pose_estimate_to_draw = LandmarkDetector::GetCorrectedPoseWorld(face_model, fx, fy, cx, cy);
-
-		// Draw it in reddish if uncertain, blueish if certain
-		//LandmarkDetector::DrawBox(captured_image, pose_estimate_to_draw, cv::Scalar((1 - vis_certainty)*255.0, 0, vis_certainty * 255), thickness, fx, fy, cx, cy);
-
-		if (det_parameters.track_gaze && detection_success && face_model.eye_model)
+		if(clnf_model.hierarchical_models[i].pdm.NumberOfPoints() != clnf_model.hierarchical_mapping[i].size())
 		{
-			FaceAnalysis::DrawGaze(captured_image, face_model, gazeDirection0, gazeDirection1, fx, fy, cx, cy);
+			DrawLandmark(clnf_model.hierarchical_models[i]);
 		}
 	}
+}
 
-	/*
-	// Work out the framerate
-	if (frame_count % 10 == 0)
+void CLandmarksdetector::DrawLandmark(const cv::Mat_<double>& shape2D,const cv::Mat_<int> &visibilities)
+{
+	int n = shape2D.rows/2;
+	std::string str = "";
+	for (int i = 0; i < n; ++i)
 	{
-		double t1 = cv::getTickCount();
-		fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
-		t0 = t1;
+		if (i < 10)
+		{
+			str = "Landmark_0" + i;
+		}
+		else
+		{
+			str = "Landmark_" + i;
+		}
+		if (visibilities.at<int>(i))
+		{
+			m_pointPtr->SetValue(shape2D.at<double>(i)/normFacX,shape2D.at<double>(i + n)/normFacY);
+			
+			m_outLandmarksPtr->Insert(str.c_str(), m_pointPtr.get());
+		}
 	}
-
-	// Write out the framerate on the image before displaying it
-	char fpsC[255];
-	std::sprintf(fpsC, "%d", (int)fps_tracker);
-	string fpsSt("FPS:");
-	fpsSt += fpsC;
-	cv::putText(captured_image, fpsSt, cv::Point(10, 20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255, 0, 0), 1, CV_AA);
-
-	if (!det_parameters.quiet_mode)
-	{
-		cv::namedWindow("tracking_result", 1);
-		cv::imshow("tracking_result", captured_image);
-	}*/
 }

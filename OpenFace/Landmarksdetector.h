@@ -7,6 +7,7 @@
 #include "./include/LandmarkDetectorParameters.h"
 #include "./include/LandmarkDetectorModel.h"
 #include "BaseCatalog/EywGraphicPoint2D.h"
+#include "BaseCatalog/EywGraphicLabelledSet2D.h"
 
 class CLandmarksdetector : public Eyw::CBlockImpl
 {
@@ -141,13 +142,14 @@ private:
 
 	Eyw::image_ptr m_inFrameImagePtr;
 
-	Eyw::list_ptr m_outLandmarksPtr;
+	Eyw::graphic_labelled_set_2d_double_ptr m_outLandmarksPtr;
 
 
 	//utility function
 	void PrepareCvImage(const Eyw::image_ptr& sourceImagePtr, cv::Mat& destinationImage);
-	void visualise_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy);
-
+	//void visualise_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy);
+	void DrawLandmark(const LandmarkDetector::CLNF& clnf_model);
+	void DrawLandmark(const cv::Mat_<double>& shape2D, const cv::Mat_<int> &visibilities);
 	/*
 	 *
 	 *	INTERNAL DATA
@@ -155,6 +157,8 @@ private:
 	 */
 
 	double fx, fy, cx, cy; //focal length e optical axis centre
+
+	double normFacX, normFacY;
 
 	LandmarkDetector::CLNF clnf_model;
 	LandmarkDetector::FaceModelParameters det_parameters = LandmarkDetector::FaceModelParameters();
