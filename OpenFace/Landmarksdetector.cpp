@@ -55,7 +55,7 @@ Eyw::block_class_registrant g_Landmarksdetector(
 
 #define IN_FRAMEIMAGE "Frame/Image"
 #define OUT_LANDMARKS "Landmarks"
-#define OUT_LANDMARKS_EYE "Eye Landmarks"
+#define OUT_LANDMARKS_EYE "Eyeball Landmarks"
 
 //////////////////////////////////////////////////////////
 /// <summary>
@@ -241,7 +241,7 @@ void CLandmarksdetector::InitSignature()
 
 	SetOutput(Eyw::pin::id(OUT_LANDMARKS_EYE)
 		.name("Eye Landmarks' position")
-		.description("Labelled set of 2D points of the landmarks of the eyes")
+		.description("Labelled set of 2D points of the landmarks of the eyeballs")
 		.type < Eyw::IGraphicLabelledSet2DDouble > ()
 		);
 
@@ -679,9 +679,7 @@ void CLandmarksdetector::DrawLandmark(const cv::Mat_<double>& shape2D,const cv::
 {
 	int n = shape2D.rows/2;
 
-	std::string str = "";
-
-	if(n != 28)
+	if(n > 66)
 	{
 		for( int i = 0; i < n; ++i)
 		{		
@@ -689,17 +687,12 @@ void CLandmarksdetector::DrawLandmark(const cv::Mat_<double>& shape2D,const cv::
 			{
 				labelCount++;
 
-				if (labelCount < 10)
-				{
-					str = "Landmark_0" + labelCount;
-				}
-				else
-				{
-					str = "Landmark_" + labelCount;
-				}
+				m_pointPtr->SetValue(cvRound(shape2D.at<double>(i)*16-10)/(normFacX*16),cvRound(shape2D.at<double>(i + n)*16)/(normFacY*16));
 
-				m_pointPtr->SetValue(cvRound(shape2D.at<double>(i)*16)/(normFacX*16),cvRound(shape2D.at<double>(i + n)*16)/(normFacY*16));
-			
+				str = labelCount;
+
+				//Notify_DebugString("labelCount %d",labelCount);
+
 				m_outLandmarksPtr->Insert(str.c_str(), m_pointPtr.get());
 
 			}
@@ -711,19 +704,33 @@ void CLandmarksdetector::DrawLandmark(const cv::Mat_<double>& shape2D,const cv::
 		{		
 			labelCount_2++;
 
-				if (labelCount_2 < 10)
-				{
-					str = "Eye_0" + labelCount_2;
-				}
-				else
-				{
-					str = "Eye_" + labelCount_2;
-				}
-
-				m_pointPtr->SetValue(cvRound(shape2D.at<double>(i)*16)/(normFacX*16),cvRound(shape2D.at<double>(i + n)*16)/(normFacY*16));
+				m_pointPtr->SetValue(cvRound(shape2D.at<double>(i)*16-10)/(normFacX*16),cvRound(shape2D.at<double>(i + n)*16)/(normFacY*16));
 			
+				str = labelCount_2;
+
+				//Notify_DebugString("labelCount %d",labelCount);
+
 				m_outLandmarksEyePtr->Insert(str.c_str(), m_pointPtr.get());
 
 		}
 	}	
+	else if (n == 6)
+	{
+		for( int i = 0; i < n; ++i)
+		{		
+					labelCount++;
+
+					m_pointPtr->SetValue(cvRound(shape2D.at<double>(i)*16-10)/(normFacX*16),cvRound(shape2D.at<double>(i + n)*16)/(normFacY*16));
+			
+					if (labelCount < 10)
+					{
+						m_outLandmarksPtr->Insert("Landmark_0"+labelCount, m_pointPtr.get());
+					}
+					else
+					{
+						m_outLandmarksPtr->Insert("Landmark_"+labelCount, m_pointPtr.get());
+					}
+
+		}	
+	}
 }

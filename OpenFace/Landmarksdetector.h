@@ -168,6 +168,8 @@ private:
 	cv::Mat landmarks;
 	cv::Mat captured_image;
 
+	std::string str;
+
 	int labelCount = 0;
 	
 	int labelCount_2 = 0;
